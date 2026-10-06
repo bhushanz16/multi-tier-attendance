@@ -209,7 +209,7 @@
                         <tbody class="divide-y divide-surface-container-highest/50">
                             {% for r in records %}
                             <tr class="bg-surface-container/60 hover:bg-surface-container-high transition-colors">
-                                <td class="py-space-sm px-space-sm text-primary-fixed opacity-70">TXN-{{ r.id|string|rjust(6, '0') }}</td>
+                                <td class="py-space-sm px-space-sm text-primary-fixed opacity-70">TXN-{{ "%06d"|format(r.id) }}</td>
                                 <td class="py-space-sm px-space-sm text-on-surface">{{ r.timestamp.strftime('%Y-%m-%d %H:%M:%S.000 UTC') if r.timestamp else r.date }}</td>
                                 <td class="py-space-sm px-space-sm">
                                     <div class="text-on-surface font-semibold">{{ r.roll_no }}</div>
