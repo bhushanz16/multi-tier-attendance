@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Edge Terminal - Synapse Sentinel</title>
+    <title>Scanner - Attendance Hub</title>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com" rel="preconnect"/>
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
@@ -16,7 +16,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
     <style>
         .video-container { position: relative; width: 100%; border-radius: 4px; overflow: hidden; display: none; background: #000; border: 1px solid rgba(0,240,255,0.4); box-shadow: inset 0 0 20px rgba(0,240,255,0.1); }
-        video, canvas { width: 100%; height: auto; display:block; }
+        video, canvas { width: 100%; height: auto; display:block; transform: scaleX(-1); /* Mirror by default */ }
+        .env-facing { transform: scaleX(1); /* Don't mirror back camera */ }
         canvas { position: absolute; top: 0; left: 0; }
         .hud-corner { position: absolute; width: 20px; height: 20px; border: 2px solid #00f0ff; }
         .hud-tl { top: 10px; left: 10px; border-right: none; border-bottom: none; }
@@ -31,14 +32,18 @@
         <div class="flex items-center gap-space-md">
             <span class="material-symbols-outlined text-primary-fixed text-2xl">memory</span>
             <div class="flex flex-col">
-                <span class="font-headline-sm text-headline-sm text-primary tracking-tight leading-none">EDGE NODE ORCHESTRATION</span>
-                <span class="font-label-caps text-label-caps text-outline uppercase tracking-wider">L1 LOCAL INFERENCE TERMINAL</span>
+                <span class="font-headline-sm text-headline-sm text-primary tracking-tight leading-none">FACE SCANNER</span>
+                <span class="font-label-caps text-label-caps text-outline uppercase tracking-wider">Take Class Attendance</span>
             </div>
         </div>
         <div class="flex items-center gap-space-md">
+            <button id="switchCameraBtn" class="hidden flex items-center gap-gutter-dense bg-surface-container hover:bg-surface-container-high text-on-surface font-headline-sm text-mono-code-sm px-space-sm py-space-xs rounded-DEFAULT border border-surface-container-highest transition-colors">
+                <span class="material-symbols-outlined text-sm">cameraswitch</span>
+                <span>SWITCH CAMERA</span>
+            </button>
             <a href="/teacher/dashboard" class="flex items-center gap-gutter-dense bg-surface-container hover:bg-surface-container-high text-on-surface font-headline-sm text-mono-code-sm px-space-sm py-space-xs rounded-DEFAULT border border-surface-container-highest transition-colors">
                 <span class="material-symbols-outlined text-sm">arrow_back</span>
-                <span>RETURN TO SOC</span>
+                <span>BACK TO DASHBOARD</span>
             </a>
         </div>
     </header>
@@ -49,44 +54,46 @@
         <div id="setupDiv" class="bg-surface-container-low rounded-xl p-space-lg shadow-xl border border-surface-container-highest space-y-space-md">
             <div class="flex items-center gap-space-xs border-b border-surface-container-highest pb-space-sm">
                 <span class="w-2.5 h-2.5 rounded-full bg-tertiary-container shadow-[0_0_8px_rgba(101,242,181,0.6)]"></span>
-                <h2 class="font-headline-sm text-headline-sm text-tertiary-fixed uppercase">Define Target Inference Topology</h2>
+                <h2 class="font-headline-sm text-headline-sm text-tertiary-fixed uppercase">Select Class Details</h2>
             </div>
             
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-space-md font-mono-code-sm">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-space-md font-mono-code-sm">
                 <div class="flex flex-col gap-1">
-                    <label class="text-label-caps text-outline">Target Semester</label>
+                    <label class="text-label-caps text-outline">Semester</label>
                     <select id="selSemester" class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-2 focus:border-primary-container focus:outline-none focus:shadow-[inset_0_0_4px_rgba(0,240,255,0.2)] transition-all">
+                        <option value="">Select...</option>
                         {% for y in semesters %}<option value="{{ y }}">{{ y }}</option>{% endfor %}
                     </select>
                 </div>
                 <div class="flex flex-col gap-1">
-                    <label class="text-label-caps text-outline">Topology Dept</label>
+                    <label class="text-label-caps text-outline">Department</label>
                     <select id="selDept" class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-2 focus:border-primary-container focus:outline-none focus:shadow-[inset_0_0_4px_rgba(0,240,255,0.2)] transition-all">
                         {% for d in depts %}<option value="{{ d }}">{{ d }}</option>{% endfor %}
                     </select>
                 </div>
                 <div class="flex flex-col gap-1">
-                    <label class="text-label-caps text-outline">Topology Div</label>
+                    <label class="text-label-caps text-outline">Class Division</label>
                     <select id="selDiv" class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-2 focus:border-primary-container focus:outline-none focus:shadow-[inset_0_0_4px_rgba(0,240,255,0.2)] transition-all">
                         {% for d in divs %}<option value="{{ d }}">{{ d }}</option>{% endfor %}
                     </select>
                 </div>
-            </div>
-
-            <div class="flex flex-col gap-1 font-mono-code-sm">
-                <label class="text-label-caps text-outline">Inference Subject / Model Sub-Routine</label>
-                <input type="text" id="subjectInput" placeholder="e.g. ADVANCED_AI_SYS_01" class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-2 focus:border-primary-container focus:outline-none focus:shadow-[inset_0_0_4px_rgba(0,240,255,0.2)] transition-all">
+                <div class="flex flex-col gap-1">
+                    <label class="text-label-caps text-outline">Subject</label>
+                    <select id="selSubject" class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-2 focus:border-primary-container focus:outline-none focus:shadow-[inset_0_0_4px_rgba(0,240,255,0.2)] transition-all">
+                        <option value="">Select a semester first...</option>
+                    </select>
+                </div>
             </div>
 
             <button id="startBtn" class="w-full mt-4 flex items-center justify-center gap-space-xs bg-primary-container/10 border border-primary-container text-primary-fixed hover:bg-primary-container hover:text-on-primary-container font-headline-sm text-mono-code-sm py-space-sm rounded-DEFAULT shadow-[0_0_10px_rgba(0,240,255,0.2)] transition-all">
                 <span class="material-symbols-outlined text-base">radar</span>
-                <span>INITIALIZE EDGE NEURAL NETWORK</span>
+                <span>START SCANNER</span>
             </button>
         </div>
 
         <!-- CAMERA SYSTEM -->
         <div id="status" class="hidden mb-space-md bg-surface-container-low border border-primary-container/50 text-primary-fixed font-mono-code-sm text-mono-code-sm p-space-sm rounded-DEFAULT text-center shadow-[0_0_12px_rgba(0,240,255,0.2)]">
-            [SYS_INIT] Booting Tensor Cores...
+            Starting systems...
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-space-lg">
@@ -97,10 +104,9 @@
                     <div class="hud-corner hud-tr"></div>
                     <div class="hud-corner hud-bl"></div>
                     <div class="hud-corner hud-br"></div>
-                    <!-- Status Overlay -->
                     <div class="absolute top-4 left-4 z-10 flex items-center gap-space-xs bg-surface-container-highest/80 backdrop-blur-sm border border-surface-variant rounded-DEFAULT px-space-xs py-0.5 font-mono-code-sm text-label-caps text-primary-fixed">
                         <span class="w-1.5 h-1.5 rounded-full bg-primary-container animate-pulse"></span>
-                        REC / OPTICAL FEED
+                        LIVE SCANNER
                     </div>
                     <video id="video" autoplay muted playsinline></video>
                     <canvas id="overlay"></canvas>
@@ -108,7 +114,7 @@
                 
                 <button id="stopBtn" class="hidden w-full flex items-center justify-center gap-space-xs bg-error-container/20 border border-error text-error hover:bg-error hover:text-white font-headline-sm text-mono-code-sm py-space-sm rounded-DEFAULT shadow-[0_0_10px_rgba(239,68,68,0.3)] transition-all">
                     <span class="material-symbols-outlined text-base">stop_circle</span>
-                    <span>HALT INFERENCE & UPLOAD TO CLOUD SOC</span>
+                    <span>STOP & SAVE ATTENDANCE</span>
                 </button>
             </div>
 
@@ -116,12 +122,11 @@
             <div id="logCard" class="hidden bg-surface-container-lowest rounded-xl p-space-md border border-surface-container-highest shadow-inner flex flex-col h-[500px]">
                 <div class="flex items-center justify-between pb-gutter-dense border-b border-surface-container-highest/30 text-outline mb-space-xs">
                     <span class="flex items-center gap-gutter text-tertiary-fixed font-label-caps text-label-caps uppercase">
-                        <span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span> WAL LOG
+                        <span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span> LOGS
                     </span>
                     <span class="font-mono-code-sm text-mono-code-sm" id="displaySubject"></span>
                 </div>
                 <ul id="logList" class="flex-1 overflow-y-auto space-y-1 font-mono-code-sm text-mono-code-sm text-on-surface-variant">
-                    <!-- Logs injected here -->
                 </ul>
             </div>
             
@@ -133,18 +138,46 @@
         const overlay = document.getElementById('overlay');
         const stopBtn = document.getElementById('stopBtn');
         const startBtn = document.getElementById('startBtn');
+        const switchCameraBtn = document.getElementById('switchCameraBtn');
         const statusDiv = document.getElementById('status');
         const logList = document.getElementById('logList');
         const setupDiv = document.getElementById('setupDiv');
         const videoContainer = document.getElementById('videoContainer');
         const logCard = document.getElementById('logCard');
+        const selSemester = document.getElementById('selSemester');
+        const selSubject = document.getElementById('selSubject');
         
+        // Subject Data passed from backend
+        const allSubjects = [
+            {% for s in subjects %}
+                { name: "{{ s.name }}", code: "{{ s.code }}", semester: "{{ s.semester }}" },
+            {% endfor %}
+        ];
+
+        selSemester.addEventListener('change', () => {
+            const sem = selSemester.value;
+            selSubject.innerHTML = '';
+            const filtered = allSubjects.filter(s => s.semester === sem);
+            if(filtered.length === 0) {
+                selSubject.innerHTML = '<option value="">No subjects found for this semester. Create one in Dashboard.</option>';
+            } else {
+                filtered.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = `${s.name} (${s.code})`;
+                    opt.innerText = `${s.name} (${s.code})`;
+                    selSubject.appendChild(opt);
+                });
+            }
+        });
+
         const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
         let faceMatcher = null;
         let running = true;
         let attendanceLog = {}; 
         let knownStudents = [];
         let cSemester, cDept, cDiv, cSubject;
+        let currentFacingMode = 'user'; // front camera by default
+        let currentStream = null;
 
         function addTerminalLog(msg, type="INFO") {
             const time = new Date().toISOString().split('T')[1].slice(0,12) + " UTC";
@@ -162,59 +195,80 @@
             logList.insertBefore(li, logList.firstChild);
         }
 
+        async function startVideoStream() {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+            }
+            currentStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacingMode } });
+            video.srcObject = currentStream;
+            
+            // Mirror video if using front camera (user)
+            if(currentFacingMode === 'environment') {
+                video.classList.add('env-facing');
+            } else {
+                video.classList.remove('env-facing');
+            }
+        }
+
+        switchCameraBtn.addEventListener('click', () => {
+            currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+            startVideoStream();
+            addTerminalLog(`Switched to ${currentFacingMode} camera.`, "INFO");
+        });
+
         startBtn.addEventListener('click', () => {
-            cSemester = document.getElementById('selSemester').value;
+            cSemester = selSemester.value;
             cDept = document.getElementById('selDept').value;
             cDiv = document.getElementById('selDiv').value;
-            cSubject = document.getElementById('subjectInput').value.trim();
+            cSubject = selSubject.value;
 
             if(!cSemester || !cDept || !cDiv || !cSubject) {
-                alert("ERR: Missing telemetry parameters."); return;
+                alert("Please select all class details, including a valid subject."); return;
             }
 
             setupDiv.style.display = 'none';
             statusDiv.style.display = 'block';
             videoContainer.style.display = 'block';
             stopBtn.style.display = 'flex';
+            switchCameraBtn.style.display = 'flex';
             logCard.style.display = 'flex';
-            document.getElementById('displaySubject').innerText = `TARGET: ${cSubject}`;
+            document.getElementById('displaySubject').innerText = `SUBJECT: ${cSubject}`;
             
             init();
         });
 
         async function init() {
             try {
-                statusDiv.innerText = `[SYS] Requesting topology parameters for ${cSemester}-${cDept}-${cDiv}...`;
+                statusDiv.innerText = `Fetching students for ${cSemester}-${cDept}-${cDiv}...`;
                 const res = await fetch(`/api/students/${cSemester}/${cDept}/${cDiv}`);
                 knownStudents = await res.json();
                 
                 if(knownStudents.length === 0) {
-                    statusDiv.innerText = "[ERR] Null dataset returned for target topology.";
+                    statusDiv.innerText = "Error: No registered students found in this class.";
                     statusDiv.className = "mb-space-md bg-error-container/20 border border-error text-error font-mono-code-sm text-mono-code-sm p-space-sm rounded-DEFAULT text-center";
                     return;
                 }
 
-                statusDiv.innerText = "[SYS] Allocating VRAM & Loading Models...";
+                statusDiv.innerText = "Loading AI models...";
                 await Promise.all([
                     faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
                     faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
                     faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
                 ]);
 
-                addTerminalLog(`Loaded ${knownStudents.length} entity vectors into RAM.`, "INFO");
+                addTerminalLog(`Loaded ${knownStudents.length} students into memory.`, "INFO");
 
                 const labeledDescriptors = knownStudents.map(student => {
                     const descArray = new Float32Array(student.face_encoding);
                     return new faceapi.LabeledFaceDescriptors(`${student.roll_no}::${student.name}`, [descArray]);
                 });
-                faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.45); // Stricter threshold for SOC
+                faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.45); // threshold
 
-                statusDiv.innerText = "[SYS] Mounting Optical Sensor...";
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-                video.srcObject = stream;
+                statusDiv.innerText = "Starting camera...";
+                await startVideoStream();
 
                 video.onplay = () => {
-                    statusDiv.innerText = "[OK] Edge Inference Runtime Active. Liveness Engine Online.";
+                    statusDiv.innerText = "Scanner active. Please hold face in view.";
                     statusDiv.className = "mb-space-md bg-tertiary-container/10 border border-tertiary-container/50 text-tertiary-fixed font-mono-code-sm text-mono-code-sm p-space-sm rounded-DEFAULT text-center";
                     
                     overlay.width = video.videoWidth;
@@ -224,12 +278,12 @@
                     knownStudents.forEach(s => {
                         attendanceLog[s.roll_no] = { name: s.name, date: today, status: 'Absent' };
                     });
-                    addTerminalLog("Sensor active. Awaiting targets.", "INFO");
+                    addTerminalLog("Camera active. Ready.", "INFO");
                     detectLoop();
                 };
 
             } catch(e) {
-                statusDiv.innerText = "[FATAL] " + e.message;
+                statusDiv.innerText = "Error: " + e.message;
             }
         }
 
@@ -252,7 +306,7 @@
             results.forEach((result, i) => {
                 const box = resizedDetections[i].detection.box;
                 let text = result.label;
-                let color = 'rgba(0, 240, 255, 1)'; // Cyan for known
+                let color = 'rgba(0, 240, 255, 1)'; 
                 let bgColor = 'rgba(7, 10, 17, 0.85)';
                 
                 if (result.label !== 'unknown') {
@@ -261,14 +315,22 @@
                     
                     if(attendanceLog[roll].status !== 'Present') {
                         attendanceLog[roll].status = 'Present';
-                        addTerminalLog(`Entity Confirmed: ${name} (ID: ${roll}) [Conf: ${Math.round((1-result.distance)*100)}%]`, "ALERT");
+                        addTerminalLog(`Present: ${name} (ID: ${roll})`, "ALERT");
                     }
                 } else {
-                    color = 'rgba(239, 68, 68, 1)'; // Red for unknown
-                    text = 'UNRECOGNIZED_ENTITY';
+                    color = 'rgba(239, 68, 68, 1)'; 
+                    text = 'Unrecognized';
                 }
 
-                const drawBox = new faceapi.draw.DrawBox(box, { 
+                // If camera is mirrored, flip the box X coordinates to match the screen
+                let drawBoxObject = box;
+                if (currentFacingMode !== 'environment') {
+                    // mirror box
+                    const newX = overlay.width - (box.x + box.width);
+                    drawBoxObject = new faceapi.Rect(newX, box.y, box.width, box.height);
+                }
+
+                const drawBox = new faceapi.draw.DrawBox(drawBoxObject, { 
                     label: text,
                     lineWidth: 2,
                     boxColor: color,
@@ -276,7 +338,7 @@
                         anchorPosition: 'TOP_RIGHT',
                         backgroundColor: bgColor,
                         fontColor: color,
-                        fontSize: 10,
+                        fontSize: 16,
                         padding: 4
                     }
                 });
@@ -288,10 +350,12 @@
 
         stopBtn.addEventListener('click', async () => {
             running = false;
-            video.srcObject.getTracks().forEach(track => track.stop());
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+            }
             stopBtn.disabled = true;
-            statusDiv.innerText = "[SYS] Packing Data & Executing Cloud Sync via RPC...";
-            addTerminalLog("HALTING SENSOR. Packing DELTA CSV...", "INFO");
+            statusDiv.innerText = "Saving attendance to database...";
+            addTerminalLog("Stopping camera and saving...", "INFO");
 
             const now = new Date();
             const timeStr = now.getHours().toString().padStart(2, '0') + ":" + 
@@ -306,7 +370,6 @@
                 };
             });
 
-            // API Sync
             try {
                 const response = await fetch('/api/sync_attendance', {
                     method: 'POST',
@@ -315,11 +378,11 @@
                 });
                 const result = await response.json();
                 if(result.status === 'success') {
-                    statusDiv.innerText = "[OK] Delta Sync to Central Cloud Successful. Safe to Exit.";
-                    addTerminalLog("SYNC SUCCESS. Master DB Updated.", "INFO");
+                    statusDiv.innerText = "Success: Attendance saved. You can return to Dashboard.";
+                    addTerminalLog("SAVE SUCCESSFUL.", "INFO");
                 }
             } catch(e) {
-                statusDiv.innerText = "[ERR] Sync failed: " + e.message;
+                statusDiv.innerText = "Error saving attendance: " + e.message;
             }
         });
     </script>

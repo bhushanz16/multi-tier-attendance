@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Synapse Sentinel - Admin SOC</title>
+    <title>Teacher Dashboard - Attendance Hub</title>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com" rel="preconnect"/>
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
@@ -24,8 +24,13 @@
             if(res.ok) location.reload();
         }
         async function deleteRecord(id) {
-            if(!confirm('TERMINAL ACTION: Purge biometric record?')) return;
+            if(!confirm('Are you sure you want to delete this record?')) return;
             const res = await fetch(`/api/attendance/${id}`, { method: 'DELETE' });
+            if(res.ok) location.reload();
+        }
+        async function deleteSubject(id) {
+            if(!confirm('Delete this subject?')) return;
+            const res = await fetch(`/api/subject/${id}`, { method: 'DELETE' });
             if(res.ok) location.reload();
         }
     </script>
@@ -36,42 +41,31 @@
         <div class="flex flex-col">
             <div class="h-14 px-space-md flex items-center gap-space-sm bg-surface-container-low border-b border-surface-container-highest">
                 <div class="flex flex-col">
-                    <span class="font-headline-sm text-headline-sm text-primary tracking-tight leading-none">SYNAPSE</span>
-                    <span class="font-label-caps text-label-caps text-primary-fixed-dim uppercase tracking-wider">Sentinel Edge SOC</span>
+                    <span class="font-headline-sm text-headline-sm text-primary tracking-tight leading-none">ATTENDANCE HUB</span>
+                    <span class="font-label-caps text-label-caps text-primary-fixed-dim uppercase tracking-wider">Teacher Portal</span>
                 </div>
             </div>
             
-            <div class="px-space-md py-space-sm bg-surface-container/50 border-b border-surface-container-highest">
-                <div class="flex items-center justify-between text-on-surface-variant font-label-caps text-label-caps uppercase">
-                    <span>Architecture Mode</span>
-                    <span class="text-tertiary-fixed font-mono-code-sm text-mono-code-sm">ACTIVE-CLUSTER</span>
-                </div>
-                <div class="mt-space-xs flex items-center gap-gutter-dense font-mono-code-sm text-mono-code-sm text-on-surface-variant">
-                    <span class="w-1.5 h-1.5 rounded-full bg-tertiary-container shadow-[0_0_8px_rgba(101,242,181,0.6)]"></span>
-                    <span>T1 Edge / T2 Gateway / T3 Cloud</span>
-                </div>
-            </div>
-
-            <nav class="flex flex-col py-space-sm px-space-xs gap-gutter-dense">
+            <nav class="flex flex-col py-space-sm px-space-xs gap-gutter-dense mt-4">
                 <a href="/teacher/edge" class="flex items-center gap-space-sm px-space-sm py-space-sm rounded-DEFAULT text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-body-md text-body-md">
                     <span class="material-symbols-outlined text-primary-fixed-dim text-lg">videocam</span>
                     <div class="flex flex-col">
-                        <span class="leading-none">Edge Live Feeds</span>
-                        <span class="font-label-caps text-label-caps text-outline leading-none mt-1">DETECTION & LIVENESS</span>
+                        <span class="leading-none">Face Scanner</span>
+                        <span class="font-label-caps text-label-caps text-outline leading-none mt-1">TAKE ATTENDANCE</span>
                     </div>
                 </a>
                 <a href="/teacher/dashboard" class="flex items-center gap-space-sm px-space-sm py-space-sm rounded-DEFAULT transition-colors bg-surface-container-high text-primary-fixed border-l-2 border-primary-container font-headline-sm">
                     <span class="material-symbols-outlined text-tertiary-fixed text-lg">receipt_long</span>
                     <div class="flex flex-col">
-                        <span class="leading-none">Attendance Logs</span>
-                        <span class="font-label-caps text-label-caps text-outline leading-none mt-1">FORENSIC AUDIT LEDGER</span>
+                        <span class="leading-none">Dashboard</span>
+                        <span class="font-label-caps text-label-caps text-outline leading-none mt-1">VIEW RECORDS & SUBJECTS</span>
                     </div>
                 </a>
                 <a href="/teacher/logout" class="flex items-center gap-space-sm px-space-sm py-space-sm rounded-DEFAULT text-on-surface-variant hover:bg-surface-container-high hover:text-error transition-colors font-body-md text-body-md mt-4">
                     <span class="material-symbols-outlined text-error text-lg">logout</span>
                     <div class="flex flex-col">
-                        <span class="leading-none text-error">Terminate Session</span>
-                        <span class="font-label-caps text-label-caps text-error opacity-70 leading-none mt-1">SECURE LOGOUT</span>
+                        <span class="leading-none text-error">Logout</span>
+                        <span class="font-label-caps text-label-caps text-error opacity-70 leading-none mt-1">END SESSION</span>
                     </div>
                 </a>
             </nav>
@@ -80,7 +74,7 @@
         <div class="p-space-sm bg-surface-container-low">
             <div class="p-space-sm rounded-DEFAULT bg-surface-container-lowest flex flex-col gap-space-xs">
                 <div class="flex items-center justify-between font-label-caps text-label-caps text-on-surface-variant">
-                    <span>ADMIN TIER</span>
+                    <span>Logged In As</span>
                     <span class="text-tertiary-fixed font-mono-code-sm text-mono-code-sm">{{ t_user|upper }}</span>
                 </div>
             </div>
@@ -92,23 +86,18 @@
         <div class="flex items-center gap-space-lg">
             <div class="flex items-center gap-space-xs bg-surface-container-low px-space-sm py-gutter-dense rounded-DEFAULT">
                 <span class="w-2 h-2 rounded-full bg-tertiary shadow-[0_0_8px_rgba(216,255,231,0.7)] animate-pulse"></span>
-                <span class="font-mono-code-sm text-mono-code-sm text-on-surface-variant">SOC Central Reconciler Online</span>
-            </div>
-            <div class="flex items-center gap-space-xs font-mono-metric-md text-mono-metric-md text-primary-fixed-dim bg-surface-container-low px-space-sm py-gutter-dense rounded-DEFAULT">
-                <span class="text-outline font-label-caps text-label-caps">INGESTED</span>
-                <span class="text-primary font-mono-code-sm text-mono-code-sm">{{ total_records }}</span>
+                <span class="font-mono-code-sm text-mono-code-sm text-on-surface-variant">System Online</span>
             </div>
         </div>
         <div class="flex items-center gap-space-md">
             <a href="/teacher/edge" class="flex items-center gap-gutter-dense bg-primary-container/10 text-primary-fixed hover:bg-primary-container hover:text-on-primary-container font-headline-sm text-mono-code-sm px-space-sm py-space-xs rounded-DEFAULT shadow-[0_0_8px_rgba(0,240,255,0.2)] transition-all" style="text-decoration:none;">
                 <span class="material-symbols-outlined text-sm">precision_manufacturing</span>
-                <span>INITIALIZE EDGE NODE</span>
+                <span>START SCANNER</span>
             </a>
             <div class="h-6 w-[1px] bg-surface-container-highest"></div>
             <div class="flex items-center gap-space-sm">
                 <div class="flex flex-col text-right">
-                    <span class="font-mono-metric-md text-mono-metric-md text-on-surface leading-tight">OPR-{{ t_user|upper }}</span>
-                    <span class="font-label-caps text-label-caps text-tertiary-fixed">FORENSIC SOC</span>
+                    <span class="font-mono-metric-md text-mono-metric-md text-on-surface leading-tight">Teacher: {{ t_user|title }}</span>
                 </div>
             </div>
         </div>
@@ -118,135 +107,179 @@
     <main class="relative pt-14 pl-72 w-full bg-background min-h-screen">
         <div class="p-space-lg space-y-space-lg w-full max-w-[1600px] mx-auto">
             
-            <!-- Filters & Telemetry Dashboard -->
-            <div class="bg-surface-container-low rounded-xl p-space-lg shadow-xl border border-surface-container-highest">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-space-lg mb-space-md">
-                    <div class="space-y-space-xs">
-                        <div class="flex items-center gap-space-sm">
-                            <span class="material-symbols-outlined text-tertiary-fixed text-xl">account_tree</span>
-                            <h1 class="font-headline-lg text-headline-lg text-primary tracking-tight">Forensic Audit Ledger</h1>
+            <div class="grid grid-cols-1 xl:grid-cols-3 gap-space-lg">
+                
+                <div class="xl:col-span-2 space-y-space-lg">
+                    <!-- Filters -->
+                    <div class="bg-surface-container-low rounded-xl p-space-lg shadow-xl border border-surface-container-highest">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-space-lg mb-space-md">
+                            <div class="space-y-space-xs">
+                                <div class="flex items-center gap-space-sm">
+                                    <span class="material-symbols-outlined text-tertiary-fixed text-xl">account_tree</span>
+                                    <h1 class="font-headline-lg text-headline-lg text-primary tracking-tight">Attendance Records</h1>
+                                </div>
+                                <p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+                                    Filter and view students' attendance records across all your classes.
+                                </p>
+                            </div>
+
+                            <form method="GET" action="/teacher/dashboard" class="flex gap-space-sm font-mono-code-sm">
+                                <div class="flex flex-col gap-1">
+                                    <label class="text-label-caps text-outline">Semester</label>
+                                    <select name="semester" class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-1.5 focus:border-primary focus:outline-none w-32">
+                                        <option value="">All Semesters</option>
+                                        {% for y in semesters %}
+                                        <option value="{{ y }}" {% if selected_semester == y %}selected{% endif %}>{{ y }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="flex flex-col gap-1">
+                                    <label class="text-label-caps text-outline">Department</label>
+                                    <select name="dept" class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-1.5 focus:border-primary focus:outline-none w-32">
+                                        <option value="">All Depts</option>
+                                        {% for d in depts %}
+                                        <option value="{{ d }}" {% if selected_dept == d %}selected{% endif %}>{{ d }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="flex flex-col gap-1">
+                                    <label class="text-label-caps text-outline">Class (Div)</label>
+                                    <select name="div" class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-1.5 focus:border-primary focus:outline-none w-24">
+                                        <option value="">All</option>
+                                        {% for d in divs %}
+                                        <option value="{{ d }}" {% if selected_div == d %}selected{% endif %}>{{ d }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="flex flex-col gap-1 justify-end">
+                                    <button type="submit" class="bg-surface-container-highest hover:bg-surface-bright text-primary px-space-md py-1.5 rounded-DEFAULT transition-colors flex items-center gap-2 border border-surface-container-highest hover:border-primary-container">
+                                        <span class="material-symbols-outlined text-sm">filter_alt</span> Filter
+                                    </button>
+                                </div>
+                            </form>
                         </div>
-                        <p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
-                            Filter hierarchical node topology and manipulate raw biometric hashes stored in the Central ERP.
-                        </p>
                     </div>
 
-                    <form method="GET" action="/teacher/dashboard" class="flex gap-space-sm font-mono-code-sm">
-                        <div class="flex flex-col gap-1">
-                            <label class="text-label-caps text-outline">Target Semester</label>
-                            <select name="semester" class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-1.5 focus:border-primary focus:outline-none w-32">
-                                <option value="">ALL_NODES</option>
-                                {% for y in semesters %}
-                                <option value="{{ y }}" {% if selected_semester == y %}selected{% endif %}>{{ y }}</option>
-                                {% endfor %}
-                            </select>
+                    <!-- Ledger Table -->
+                    <div class="bg-surface-container-low rounded-xl p-space-lg shadow-xl border border-surface-container-highest">
+                        <div class="flex items-center justify-between mb-space-md">
+                            <div class="flex items-center gap-space-xs">
+                                <span class="w-2.5 h-2.5 rounded-full bg-secondary-container shadow-[0_0_8px_rgba(107,19,175,0.6)]"></span>
+                                <h3 class="font-headline-sm text-headline-sm text-secondary-fixed">Student Attendance Log</h3>
+                            </div>
+                            <span class="px-space-xs py-0.5 bg-surface-container text-on-surface font-mono-code-sm text-mono-code-sm rounded-DEFAULT border border-surface-container-highest">Showing {{ records|length }} records</span>
                         </div>
-                        <div class="flex flex-col gap-1">
-                            <label class="text-label-caps text-outline">Topology Dept</label>
-                            <select name="dept" class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-1.5 focus:border-primary focus:outline-none w-32">
-                                <option value="">ALL_DEPTS</option>
-                                {% for d in depts %}
-                                <option value="{{ d }}" {% if selected_dept == d %}selected{% endif %}>{{ d }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="flex flex-col gap-1">
-                            <label class="text-label-caps text-outline">Topology Div</label>
-                            <select name="div" class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-1.5 focus:border-primary focus:outline-none w-24">
-                                <option value="">ALL</option>
-                                {% for d in divs %}
-                                <option value="{{ d }}" {% if selected_div == d %}selected{% endif %}>{{ d }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="flex flex-col gap-1 justify-end">
-                            <button type="submit" class="bg-surface-container-highest hover:bg-surface-bright text-primary px-space-md py-1.5 rounded-DEFAULT transition-colors flex items-center gap-2 border border-surface-container-highest hover:border-primary-container">
-                                <span class="material-symbols-outlined text-sm">filter_alt</span> QUERY
-                            </button>
-                        </div>
-                    </form>
-                </div>
 
-                <!-- Metrics Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-space-md mt-space-lg pt-space-lg border-t border-surface-container">
-                    <div class="bg-surface-container rounded-lg p-space-md shadow-sm">
-                        <div class="flex justify-between font-label-caps text-label-caps text-outline mb-1">TOTAL INGESTED VECTORS <span class="text-primary-fixed">T3 CLOUD</span></div>
-                        <div class="font-mono-metric-lg text-display-lg text-primary">{{ total_records }}</div>
-                    </div>
-                    <div class="bg-surface-container rounded-lg p-space-md shadow-sm">
-                        <div class="flex justify-between font-label-caps text-label-caps text-outline mb-1">LIVE NODES SCANNED TODAY <span class="text-tertiary-fixed">EDGE</span></div>
-                        <div class="font-mono-metric-lg text-display-lg text-tertiary-fixed">{{ classes_today }}</div>
-                    </div>
-                    <div class="bg-surface-container rounded-lg p-space-md shadow-sm border border-error-container/30">
-                        <div class="flex justify-between font-label-caps text-label-caps text-error mb-1">DETECTED DISCREPANCIES <span class="text-error">TRIAGE REQ</span></div>
-                        <div class="font-mono-metric-lg text-display-lg text-error">0</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Ledger Table -->
-            <div class="bg-surface-container-low rounded-xl p-space-lg shadow-xl border border-surface-container-highest">
-                <div class="flex items-center justify-between mb-space-md">
-                    <div class="flex items-center gap-space-xs">
-                        <span class="w-2.5 h-2.5 rounded-full bg-secondary-container shadow-[0_0_8px_rgba(107,19,175,0.6)]"></span>
-                        <h3 class="font-headline-sm text-headline-sm text-secondary-fixed">Central Cloud Master (Verified)</h3>
-                    </div>
-                    <span class="px-space-xs py-0.5 bg-surface-container text-on-surface font-mono-code-sm text-mono-code-sm rounded-DEFAULT border border-surface-container-highest">Displaying {{ records|length }} vectors</span>
-                </div>
-
-                <div class="overflow-x-auto rounded-lg border border-surface-container-highest">
-                    <table class="w-full text-left font-mono-code-sm text-mono-code-sm">
-                        <thead class="bg-surface-container-lowest text-outline font-label-caps text-label-caps uppercase">
-                            <tr>
-                                <th class="py-space-sm px-space-sm">Transaction UUID</th>
-                                <th class="py-space-sm px-space-sm">UTC Timestamp</th>
-                                <th class="py-space-sm px-space-sm">Entity Payload (Roll No)</th>
-                                <th class="py-space-sm px-space-sm">Inference Model (Subj)</th>
-                                <th class="py-space-sm px-space-sm text-center">Neural State</th>
-                                <th class="py-space-sm px-space-sm text-right">Forensic Override</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-surface-container-highest/50">
-                            {% for r in records %}
-                            <tr class="bg-surface-container/60 hover:bg-surface-container-high transition-colors">
-                                <td class="py-space-sm px-space-sm text-primary-fixed opacity-70">TXN-{{ "%06d"|format(r.id) }}</td>
-                                <td class="py-space-sm px-space-sm text-on-surface">{{ r.timestamp.strftime('%Y-%m-%d %H:%M:%S.000 UTC') if r.timestamp else r.date }}</td>
-                                <td class="py-space-sm px-space-sm">
-                                    <div class="text-on-surface font-semibold">{{ r.roll_no }}</div>
-                                    <div class="text-outline text-label-caps mt-0.5">{{ r.semester }} | DPT_{{ r.dept|upper }} | DIV_{{ r.div }}</div>
-                                </td>
-                                <td class="py-space-sm px-space-sm text-on-surface-variant">{{ r.subject }}</td>
-                                <td class="py-space-sm px-space-sm text-center">
-                                    {% if r.status == 'Present' %}
-                                        <span class="inline-flex items-center gap-1 px-space-xs py-0.5 rounded-DEFAULT bg-tertiary-container/20 text-tertiary-fixed border border-tertiary-container/50">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-tertiary-container"></span> MATCHED
-                                        </span>
-                                    {% else %}
-                                        <span class="inline-flex items-center gap-1 px-space-xs py-0.5 rounded-DEFAULT bg-error-container/20 text-error border border-error-container/50">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-error"></span> ABSENT
-                                        </span>
+                        <div class="overflow-x-auto rounded-lg border border-surface-container-highest">
+                            <table class="w-full text-left font-mono-code-sm text-mono-code-sm">
+                                <thead class="bg-surface-container-lowest text-outline font-label-caps text-label-caps uppercase">
+                                    <tr>
+                                        <th class="py-space-sm px-space-sm">Time</th>
+                                        <th class="py-space-sm px-space-sm">Student</th>
+                                        <th class="py-space-sm px-space-sm">Subject</th>
+                                        <th class="py-space-sm px-space-sm text-center">Status</th>
+                                        <th class="py-space-sm px-space-sm text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-surface-container-highest/50">
+                                    {% for r in records %}
+                                    <tr class="bg-surface-container/60 hover:bg-surface-container-high transition-colors">
+                                        <td class="py-space-sm px-space-sm text-on-surface">{{ r.timestamp.strftime('%b %d, %H:%M') if r.timestamp else r.date }}</td>
+                                        <td class="py-space-sm px-space-sm">
+                                            <div class="text-on-surface font-semibold">{{ r.roll_no }}</div>
+                                            <div class="text-outline text-label-caps mt-0.5">{{ r.semester }} | {{ r.dept|upper }} | Div {{ r.div }}</div>
+                                        </td>
+                                        <td class="py-space-sm px-space-sm text-on-surface-variant">{{ r.subject }}</td>
+                                        <td class="py-space-sm px-space-sm text-center">
+                                            {% if r.status == 'Present' %}
+                                                <span class="inline-flex items-center gap-1 px-space-xs py-0.5 rounded-DEFAULT bg-tertiary-container/20 text-tertiary-fixed border border-tertiary-container/50">
+                                                    Present
+                                                </span>
+                                            {% else %}
+                                                <span class="inline-flex items-center gap-1 px-space-xs py-0.5 rounded-DEFAULT bg-error-container/20 text-error border border-error-container/50">
+                                                    Absent
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="py-space-sm px-space-sm text-right">
+                                            <div class="flex justify-end gap-2">
+                                                <button onclick="updateStatus({{ r.id }}, '{{ r.status }}')" class="px-space-xs py-1 rounded-DEFAULT bg-surface-container text-secondary-fixed hover:bg-surface-bright hover:text-secondary text-label-caps border border-surface-container-highest transition-colors">
+                                                    Toggle
+                                                </button>
+                                                <button onclick="deleteRecord({{ r.id }})" class="px-space-xs py-1 rounded-DEFAULT bg-error-container/10 text-error hover:bg-error hover:text-white text-label-caps border border-error/30 transition-colors">
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                    {% if not records %}
+                                    <tr><td colspan="5" class="text-center py-space-lg text-outline font-mono-code-sm">No records found.</td></tr>
                                     {% endif %}
-                                </td>
-                                <td class="py-space-sm px-space-sm text-right">
-                                    <div class="flex justify-end gap-2">
-                                        <button onclick="updateStatus({{ r.id }}, '{{ r.status }}')" class="px-space-xs py-1 rounded-DEFAULT bg-surface-container text-secondary-fixed hover:bg-surface-bright hover:text-secondary text-label-caps border border-surface-container-highest transition-colors">
-                                            FLIP STATE
-                                        </button>
-                                        <button onclick="deleteRecord({{ r.id }})" class="px-space-xs py-1 rounded-DEFAULT bg-error-container/10 text-error hover:bg-error hover:text-white text-label-caps border border-error/30 transition-colors">
-                                            PURGE
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                            {% if not records %}
-                            <tr><td colspan="6" class="text-center py-space-lg text-outline font-mono-code-sm">NO VECTORS DETECTED IN TARGET TOPOLOGY.</td></tr>
-                            {% endif %}
-                        </tbody>
-                    </table>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
+                <!-- Subject Management -->
+                <div class="xl:col-span-1 space-y-space-lg">
+                    <div class="bg-surface-container-low rounded-xl p-space-md shadow-xl border border-surface-container-highest">
+                        <div class="flex items-center gap-space-xs mb-space-md border-b border-surface-container-highest pb-space-sm">
+                            <span class="material-symbols-outlined text-primary-fixed text-lg">menu_book</span>
+                            <h2 class="font-headline-sm text-headline-sm text-primary-fixed">My Subjects</h2>
+                        </div>
+                        
+                        <form method="POST" action="/teacher/subject" class="space-y-space-sm mb-space-md">
+                            <div class="flex flex-col gap-1 font-mono-code-sm">
+                                <label class="text-label-caps text-outline">Subject Name</label>
+                                <input type="text" name="name" required placeholder="e.g. Physics 101" class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-2 focus:border-primary-container focus:outline-none focus:shadow-[inset_0_0_4px_rgba(0,240,255,0.2)] transition-all">
+                            </div>
+                            <div class="flex flex-col gap-1 font-mono-code-sm">
+                                <label class="text-label-caps text-outline">Subject Code</label>
+                                <input type="text" name="code" required placeholder="e.g. PHY101" class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-2 focus:border-primary-container focus:outline-none focus:shadow-[inset_0_0_4px_rgba(0,240,255,0.2)] transition-all">
+                            </div>
+                            <div class="flex flex-col gap-1 font-mono-code-sm">
+                                <label class="text-label-caps text-outline">Semester</label>
+                                <select name="semester" required class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-2 focus:border-primary-container focus:outline-none">
+                                    <option value="Semester 1">Semester 1</option>
+                                    <option value="Semester 2">Semester 2</option>
+                                    <option value="Semester 3">Semester 3</option>
+                                    <option value="Semester 4">Semester 4</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="w-full flex items-center justify-center gap-space-xs bg-primary-container/10 border border-primary-container text-primary-fixed hover:bg-primary-container hover:text-on-primary-container font-headline-sm text-mono-code-sm py-space-sm rounded-DEFAULT shadow-[0_0_10px_rgba(0,240,255,0.2)] transition-all">
+                                <span class="material-symbols-outlined text-base">add</span>
+                                <span>Create Subject</span>
+                            </button>
+                        </form>
+
+                        <div class="overflow-x-auto rounded-lg border border-surface-container-highest">
+                            <table class="w-full text-left font-mono-code-sm text-mono-code-sm">
+                                <thead class="bg-surface-container-lowest text-outline font-label-caps text-label-caps uppercase">
+                                    <tr>
+                                        <th class="py-space-xs px-space-sm">Subject</th>
+                                        <th class="py-space-xs px-space-sm">Sem</th>
+                                        <th class="py-space-xs px-space-sm text-right"></th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-surface-container-highest/50">
+                                    {% for s in teacher_subjects %}
+                                    <tr class="bg-surface-container/60">
+                                        <td class="py-space-sm px-space-sm text-on-surface">{{ s.name }} ({{ s.code }})</td>
+                                        <td class="py-space-sm px-space-sm text-outline">{{ s.semester }}</td>
+                                        <td class="py-space-sm px-space-sm text-right">
+                                            <button onclick="deleteSubject({{ s.id }})" class="text-error hover:text-white">Delete</button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </div>
     </main>
 </body>

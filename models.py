@@ -32,3 +32,11 @@ class Attendance(Base):
     div = Column(String, index=True)
     status = Column(String)
     teacher_username = Column(String, index=True) # Links attendance to the specific teacher
+
+class Subject(Base):
+    __tablename__ = "subjects"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True)
+    code = Column(String, index=True)
+    semester = Column(String, index=True)
+    teacher_username = Column(String, index=True)

@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Student Node - Synapse Sentinel</title>
+    <title>Student Portal - Attendance Hub</title>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com" rel="preconnect"/>
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
@@ -19,7 +19,8 @@
         .fc-toolbar-title { color: white !important; font-size: 1.2rem !important; font-family: 'Space Grotesk', sans-serif;}
         .fc-button-primary { background-color: #00f0ff !important; color:#0b1326 !important; border:none !important; text-transform: capitalize !important;}
         .video-container { position: relative; width: 100%; border-radius: 4px; overflow: hidden; background: #000; border: 1px solid rgba(0,240,255,0.4); box-shadow: inset 0 0 20px rgba(0,240,255,0.1); }
-        video, canvas { width: 100%; height: auto; display:block; }
+        video, canvas { width: 100%; height: auto; display:block; transform: scaleX(-1); }
+        .env-facing { transform: scaleX(1); }
     </style>
     <script src="https://cdn.tailwindcss.com"></script>
     <script id="tailwind-config">
@@ -36,19 +37,19 @@
         <div class="flex items-center gap-space-md">
             <span class="material-symbols-outlined text-secondary-fixed text-2xl">shield_person</span>
             <div class="flex flex-col">
-                <span class="font-headline-sm text-headline-sm text-secondary-fixed tracking-tight leading-none">STUDENT PROFILE NODE</span>
-                <span class="font-label-caps text-label-caps text-outline uppercase tracking-wider">SEC-EMP-{{ student.roll_no }}</span>
+                <span class="font-headline-sm text-headline-sm text-secondary-fixed tracking-tight leading-none">STUDENT PORTAL</span>
+                <span class="font-label-caps text-label-caps text-outline uppercase tracking-wider">Attendance Hub</span>
             </div>
         </div>
         <div class="flex items-center gap-space-md">
             <div class="flex flex-col text-right hidden sm:flex">
-                <span class="font-mono-metric-md text-mono-metric-md text-on-surface leading-tight">{{ student.name|upper }}</span>
-                <span class="font-label-caps text-label-caps text-outline">{{ student.semester }} | {{ student.dept|upper }} | DIV_{{ student.div }}</span>
+                <span class="font-mono-metric-md text-mono-metric-md text-on-surface leading-tight">{{ student.name|title }}</span>
+                <span class="font-label-caps text-label-caps text-outline">{{ student.semester }} | {{ student.dept|upper }} | Div {{ student.div }}</span>
             </div>
             <div class="h-6 w-[1px] bg-surface-container-highest"></div>
             <a href="/student/logout" class="flex items-center gap-gutter-dense bg-error-container/10 border border-error/30 text-error hover:bg-error hover:text-white font-headline-sm text-mono-code-sm px-space-sm py-space-xs rounded-DEFAULT transition-all" style="text-decoration:none;">
                 <span class="material-symbols-outlined text-sm">logout</span>
-                <span>DISCONNECT</span>
+                <span>LOGOUT</span>
             </a>
         </div>
     </header>
@@ -62,32 +63,37 @@
             <div class="bg-surface-container-low rounded-xl p-space-md shadow-xl border border-surface-container-highest">
                 <div class="flex flex-col items-center text-center">
                     <span class="material-symbols-outlined text-primary-fixed text-5xl mb-2">face_retouching_natural</span>
-                    <h2 class="font-headline-sm text-headline-sm text-primary tracking-tight">Biometric Signature</h2>
+                    <h2 class="font-headline-sm text-headline-sm text-primary tracking-tight">Face Registration</h2>
                     
                     <div class="w-full mt-4 mb-4">
                         {% if has_face %}
                         <div class="bg-tertiary-container/10 border border-tertiary-container/50 p-space-sm rounded-DEFAULT flex items-center justify-center gap-2">
                             <span class="w-1.5 h-1.5 rounded-full bg-tertiary-container animate-pulse"></span>
-                            <span class="text-tertiary-fixed font-mono-code-sm text-label-caps">SIGNATURE SECURED & ACTIVE</span>
+                            <span class="text-tertiary-fixed font-mono-code-sm text-label-caps">FACE REGISTERED & ACTIVE</span>
                         </div>
                         {% else %}
                         <div class="bg-error-container/10 border border-error/50 p-space-sm rounded-DEFAULT flex items-center justify-center gap-2">
                             <span class="material-symbols-outlined text-error text-sm">warning</span>
-                            <span class="text-error font-mono-code-sm text-label-caps">ACTION REQ: NO SIGNATURE FOUND</span>
+                            <span class="text-error font-mono-code-sm text-label-caps">ACTION REQUIRED: NO FACE REGISTERED</span>
                         </div>
                         {% endif %}
                     </div>
 
                     <div class="video-container">
+                        <div class="absolute top-2 right-2 z-10">
+                            <button id="switchCameraBtn" class="bg-surface-container-highest/80 backdrop-blur-sm border border-surface-variant rounded-DEFAULT p-1 text-primary-fixed hover:bg-surface-variant transition-colors">
+                                <span class="material-symbols-outlined text-sm">cameraswitch</span>
+                            </button>
+                        </div>
                         <video id="video" autoplay muted playsinline></video>
                         <canvas id="overlay"></canvas>
                     </div>
 
                     <button id="captureBtn" disabled class="w-full mt-4 flex items-center justify-center gap-space-xs bg-primary-container/10 border border-primary-container text-primary-fixed hover:bg-primary-container hover:text-on-primary-container font-headline-sm text-mono-code-sm py-space-sm rounded-DEFAULT shadow-[0_0_10px_rgba(0,240,255,0.2)] transition-all">
                         <span class="material-symbols-outlined text-base">center_focus_strong</span>
-                        <span>UPDATE BIOMETRIC VECTOR</span>
+                        <span>UPDATE FACE REGISTRATION</span>
                     </button>
-                    <div id="status" class="mt-2 font-mono-code-sm text-outline text-label-caps">Mounting hardware...</div>
+                    <div id="status" class="mt-2 font-mono-code-sm text-outline text-label-caps">Starting camera...</div>
                 </div>
             </div>
 
@@ -95,7 +101,7 @@
             <div class="bg-surface-container-low rounded-xl p-space-md shadow-xl border border-surface-container-highest">
                 <div class="flex items-center gap-space-xs mb-space-md border-b border-surface-container-highest pb-space-sm">
                     <span class="material-symbols-outlined text-secondary-fixed text-lg">donut_small</span>
-                    <h2 class="font-headline-sm text-headline-sm text-secondary-fixed">Sub-Routine Analytics</h2>
+                    <h2 class="font-headline-sm text-headline-sm text-secondary-fixed">Subject Analytics</h2>
                 </div>
                 
                 <div class="flex justify-center mb-space-md" style="height:180px;">
@@ -106,9 +112,9 @@
                     <table class="w-full text-left font-mono-code-sm text-mono-code-sm">
                         <thead class="bg-surface-container-lowest text-outline font-label-caps text-label-caps uppercase">
                             <tr>
-                                <th class="py-space-xs px-space-sm">Sub-Routine (Subject)</th>
-                                <th class="py-space-xs px-space-sm text-right">Hit/Total</th>
-                                <th class="py-space-xs px-space-sm text-right">Ratio</th>
+                                <th class="py-space-xs px-space-sm">Subject</th>
+                                <th class="py-space-xs px-space-sm text-right">Attended/Total</th>
+                                <th class="py-space-xs px-space-sm text-right">Percentage</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-surface-container-highest/50">
@@ -179,33 +185,56 @@
         const video = document.getElementById('video');
         const captureBtn = document.getElementById('captureBtn');
         const statusDiv = document.getElementById('status');
+        const switchCameraBtn = document.getElementById('switchCameraBtn');
         const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
+        
+        let currentFacingMode = 'user'; // front camera
+        let currentStream = null;
 
         async function initCamera() {
             try {
-                await Promise.all([
-                    faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
-                    faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-                    faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
-                ]);
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                video.srcObject = stream;
+                if(!faceapi.nets.ssdMobilenetv1.isLoaded) {
+                    await Promise.all([
+                        faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+                        faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                        faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+                    ]);
+                }
+                
+                if (currentStream) {
+                    currentStream.getTracks().forEach(track => track.stop());
+                }
+
+                currentStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacingMode } });
+                video.srcObject = currentStream;
+                
+                if(currentFacingMode === 'environment') {
+                    video.classList.add('env-facing');
+                } else {
+                    video.classList.remove('env-facing');
+                }
+
                 video.onloadedmetadata = () => {
                     captureBtn.disabled = false;
-                    statusDiv.innerText = "OPTICAL SENSOR READY.";
+                    statusDiv.innerText = "Camera ready. Position face in view.";
                 };
-            } catch(e) { statusDiv.innerText = "[ERR] " + e.message; }
+            } catch(e) { statusDiv.innerText = "Error: " + e.message; }
         }
 
+        switchCameraBtn.addEventListener('click', () => {
+            currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+            initCamera();
+        });
+
         captureBtn.addEventListener('click', async () => {
-            statusDiv.innerText = "[SYS] Parsing facial landmarks...";
+            statusDiv.innerText = "Analyzing face...";
             const detection = await faceapi.detectSingleFace(video).withFaceLandmarks().withFaceDescriptor();
-            if(!detection) { statusDiv.innerText = "[ERR] No subject detected."; return; }
+            if(!detection) { statusDiv.innerText = "Error: No face detected. Try moving closer."; return; }
             if (detection.detection.score < 0.90 || detection.detection.box.width < 100) {
-                statusDiv.innerText = "[ERR] Low confidence or distance too great."; return;
+                statusDiv.innerText = "Error: Face unclear or too far away."; return;
             }
 
-            statusDiv.innerText = "[SYS] Uploading Hash...";
+            statusDiv.innerText = "Saving face registration...";
             const response = await fetch('/api/enroll_face', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -213,8 +242,9 @@
             });
             const result = await response.json();
             if(result.status === 'success') location.reload();
-            else statusDiv.innerText = "[ERR] DB Sync Failed.";
+            else statusDiv.innerText = "Error saving registration.";
         });
+        
         initCamera();
     </script>
 </body>

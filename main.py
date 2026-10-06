@@ -11,7 +11,7 @@ from typing import List
 from sqlalchemy.sql import func
 from sqlalchemy import desc
 
-from models import Base, Student, Attendance, Teacher
+from models import Base, Student, Attendance, Teacher, Subject
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -105,6 +105,8 @@ async def teacher_dashboard(request: Request, semester: str = None, dept: str = 
     depts = [d[0] for d in db.query(Student.dept).distinct().all() if d[0]]
     divs = [d[0] for d in db.query(Student.div).distinct().all() if d[0]]
 
+    teacher_subjects = db.query(Subject).filter(Subject.teacher_username == t_user).all()
+
     return templates.TemplateResponse(
         request=request, 
         name="teacher_dashboard.html", 
@@ -116,6 +118,7 @@ async def teacher_dashboard(request: Request, semester: str = None, dept: str = 
             "semesters": semesters,
             "depts": depts,
             "divs": divs,
+            "teacher_subjects": teacher_subjects,
             "selected_semester": semester,
             "selected_dept": dept,
             "selected_div": div,
@@ -133,9 +136,30 @@ async def teacher_edge_page(request: Request, db: Session = Depends(get_db)):
     depts = [d[0] for d in db.query(Student.dept).distinct().all() if d[0]]
     divs = [d[0] for d in db.query(Student.div).distinct().all() if d[0]]
 
+    teacher_subjects = db.query(Subject).filter(Subject.teacher_username == t_user).all()
+
     return templates.TemplateResponse(request=request, name="teacher_edge.html", context={
-        "semesters": semesters, "depts": depts, "divs": divs
+        "semesters": semesters, "depts": depts, "divs": divs, "subjects": teacher_subjects
     })
+
+@app.post("/teacher/subject")
+async def create_subject(request: Request, name: str = Form(...), code: str = Form(...), semester: str = Form(...), db: Session = Depends(get_db)):
+    t_user = get_teacher_user(request)
+    if not t_user: return RedirectResponse(url="/teacher/login", status_code=302)
+    db.add(Subject(name=name, code=code, semester=semester, teacher_username=t_user))
+    db.commit()
+    return RedirectResponse(url="/teacher/dashboard", status_code=302)
+
+@app.delete("/api/subject/{id}")
+async def delete_subject(id: int, request: Request, db: Session = Depends(get_db)):
+    t_user = get_teacher_user(request)
+    if not t_user: return JSONResponse({"status": "error"}, status_code=401)
+    record = db.query(Subject).filter(Subject.id == id, Subject.teacher_username == t_user).first()
+    if record:
+        db.delete(record)
+        db.commit()
+        return {"status": "success"}
+    return {"status": "error"}
 
 # ==================== STUDENT ROUTES ====================
 
