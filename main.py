@@ -9,6 +9,7 @@ from datetime import datetime
 from pydantic import BaseModel
 from typing import List
 from sqlalchemy.sql import func
+from sqlalchemy import desc
 
 from models import Base, Student, Attendance, Teacher
 
@@ -16,8 +17,8 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-# Changed DB name to avoid lock issues with previous schema
-SQLALCHEMY_DATABASE_URL = "sqlite:///./attendance_v2.db"
+# Use v3 for new advanced schema
+SQLALCHEMY_DATABASE_URL = "sqlite:///./attendance_v3.db"
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base.metadata.create_all(bind=engine)
@@ -75,19 +76,41 @@ async def teacher_dashboard(request: Request, db: Session = Depends(get_db)):
     
     total_students = db.query(Student).count()
     total_records = db.query(Attendance).count()
-    records = db.query(Attendance).order_by(Attendance.date.desc()).limit(50).all()
     
+    # Calculate classes taken today
+    today = datetime.now().date()
+    classes_today = db.query(Attendance.subject, Attendance.class_name).filter(Attendance.date == today).distinct().count()
+
+    records = db.query(Attendance).order_by(desc(Attendance.timestamp)).limit(50).all()
+    
+    # Subject breakdown for chart
+    subject_stats = db.query(Attendance.subject, func.count(Attendance.id)).group_by(Attendance.subject).all()
+    subjects = [s[0] for s in subject_stats if s[0]]
+    counts = [s[1] for s in subject_stats if s[0]]
+
     return templates.TemplateResponse(
         request=request, 
         name="teacher_dashboard.html", 
-        context={"records": records, "total_students": total_students, "total_records": total_records}
+        context={
+            "records": records, 
+            "total_students": total_students, 
+            "total_records": total_records,
+            "classes_today": classes_today,
+            "chart_labels": json.dumps(subjects),
+            "chart_data": json.dumps(counts)
+        }
     )
 
 @app.get("/teacher/edge", response_class=HTMLResponse)
-async def teacher_edge_page(request: Request):
+async def teacher_edge_page(request: Request, db: Session = Depends(get_db)):
     if not get_teacher_user(request):
         return RedirectResponse(url="/teacher/login")
-    return templates.TemplateResponse(request=request, name="teacher_edge.html")
+    
+    # Get unique classes for dropdown
+    classes = db.query(Student.class_name).distinct().all()
+    class_list = [c[0] for c in classes if c[0]]
+
+    return templates.TemplateResponse(request=request, name="teacher_edge.html", context={"classes": class_list})
 
 # ==================== STUDENT ROUTES ====================
 
@@ -109,12 +132,12 @@ async def student_register_page(request: Request):
     return templates.TemplateResponse(request=request, name="student_register.html")
 
 @app.post("/student/register")
-async def student_register_post(roll_no: str = Form(...), name: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
+async def student_register_post(roll_no: str = Form(...), name: str = Form(...), password: str = Form(...), class_name: str = Form(...), db: Session = Depends(get_db)):
     existing = db.query(Student).filter(Student.roll_no == roll_no).first()
     if existing:
         return HTMLResponse("Student already registered", status_code=400)
     
-    new_student = Student(roll_no=roll_no, name=name, password=password)
+    new_student = Student(roll_no=roll_no, name=name, password=password, class_name=class_name)
     db.add(new_student)
     db.commit()
     return RedirectResponse(url="/student/login", status_code=302)
@@ -132,14 +155,48 @@ async def student_dashboard(request: Request, db: Session = Depends(get_db)):
         return RedirectResponse(url="/student/login")
     
     student = db.query(Student).filter(Student.roll_no == roll_no).first()
-    records = db.query(Attendance).filter(Attendance.roll_no == roll_no).order_by(Attendance.date.desc()).all()
+    records = db.query(Attendance).filter(Attendance.roll_no == roll_no).order_by(desc(Attendance.timestamp)).all()
     
+    # Calculate Attendance % per subject
+    total_lectures = db.query(Attendance.subject, func.count(Attendance.id)).filter(Attendance.class_name == student.class_name).group_by(Attendance.subject).all()
+    my_presence = db.query(Attendance.subject, func.count(Attendance.id)).filter(Attendance.roll_no == roll_no, Attendance.status == 'Present').group_by(Attendance.subject).all()
+    
+    presence_dict = {p[0]: p[1] for p in my_presence}
+    analytics = []
+    chart_labels = []
+    chart_data = []
+
+    for t in total_lectures:
+        subj = t[0]
+        total = t[1]
+        # Divide by number of unique students in class to get actual lecture count
+        student_count = db.query(Student).filter(Student.class_name == student.class_name).count()
+        if student_count > 0:
+            actual_lectures = total // student_count
+        else:
+            actual_lectures = total
+
+        if actual_lectures == 0: actual_lectures = 1
+        attended = presence_dict.get(subj, 0)
+        percentage = min(100, round((attended / actual_lectures) * 100))
+        
+        analytics.append({"subject": subj, "attended": attended, "total": actual_lectures, "percentage": percentage})
+        chart_labels.append(subj)
+        chart_data.append(percentage)
+
     has_face = student.face_encoding is not None
     
     return templates.TemplateResponse(
         request=request, 
         name="student_dashboard.html", 
-        context={"student": student, "records": records, "has_face": has_face}
+        context={
+            "student": student, 
+            "records": records, 
+            "has_face": has_face,
+            "analytics": analytics,
+            "chart_labels": json.dumps(chart_labels),
+            "chart_data": json.dumps(chart_data)
+        }
     )
 
 # ==================== API ROUTES ====================
@@ -161,10 +218,9 @@ async def enroll_face_api(data: EnrollData, request: Request, db: Session = Depe
     db.commit()
     return JSONResponse({"status": "success", "message": "Face data updated successfully."})
 
-@app.get("/api/students")
-async def get_students_api(db: Session = Depends(get_db)):
-    # Only fetch students that have enrolled their face
-    students = db.query(Student).filter(Student.face_encoding != None).all()
+@app.get("/api/students/{class_name}")
+async def get_students_by_class(class_name: str, db: Session = Depends(get_db)):
+    students = db.query(Student).filter(Student.face_encoding != None, Student.class_name == class_name).all()
     res = []
     for s in students:
         res.append({
@@ -177,6 +233,9 @@ async def get_students_api(db: Session = Depends(get_db)):
 class AttendanceRecord(BaseModel):
     roll_no: str
     date: str
+    time: str
+    subject: str
+    class_name: str
     status: str
 
 @app.post("/api/sync_attendance")
@@ -187,19 +246,31 @@ async def sync_attendance_api(records: List[AttendanceRecord], request: Request,
     for row in records:
         try:
             r_date = datetime.strptime(str(row.date), "%Y-%m-%d").date()
+            r_time = datetime.strptime(str(row.date) + " " + str(row.time), "%Y-%m-%d %H:%M:%S")
         except ValueError:
             continue
         
+        # Don't overwrite if same subject/date/rollno exists, unless status changes? 
+        # Actually just record it as a new timestamped event or overwrite. Let's overwrite for same day/subject.
         existing = db.query(Attendance).filter(
             Attendance.roll_no == row.roll_no,
-            Attendance.date == r_date
+            Attendance.date == r_date,
+            Attendance.subject == row.subject
         ).first()
 
         if existing:
             existing.status = row.status
+            existing.timestamp = r_time
         else:
-            new_record = Attendance(roll_no=row.roll_no, date=r_date, status=row.status)
+            new_record = Attendance(
+                roll_no=row.roll_no, 
+                date=r_date, 
+                timestamp=r_time,
+                subject=row.subject,
+                class_name=row.class_name,
+                status=row.status
+            )
             db.add(new_record)
     
     db.commit()
-    return {"status": "success", "message": "Synced to database."}
+    return {"status": "success", "message": "Synced to advanced database."}

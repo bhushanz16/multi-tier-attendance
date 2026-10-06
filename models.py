@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Date
+from sqlalchemy import Column, Integer, String, Date, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -14,12 +14,16 @@ class Student(Base):
     id = Column(Integer, primary_key=True, index=True)
     roll_no = Column(String, unique=True, index=True)
     name = Column(String)
-    password = Column(String)  # New field for student auth
-    face_encoding = Column(String, nullable=True) # Can be null if registered but not enrolled yet
+    password = Column(String)
+    class_name = Column(String)  # New field: e.g., 'CS-A', 'Grade 10'
+    face_encoding = Column(String, nullable=True)
 
 class Attendance(Base):
     __tablename__ = "attendance"
     id = Column(Integer, primary_key=True, index=True)
     roll_no = Column(String, index=True)
     date = Column(Date, index=True)
+    timestamp = Column(DateTime) # Precise time of scan
+    subject = Column(String, index=True) # e.g., 'Mathematics'
+    class_name = Column(String, index=True) # e.g., 'CS-A'
     status = Column(String)
