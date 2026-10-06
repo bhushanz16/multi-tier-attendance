@@ -133,18 +133,24 @@
                     <div class="bg-surface-container rounded-lg p-space-md border border-surface-container-highest flex flex-col justify-between">
                         <div>
                             <h3 class="font-headline-sm text-secondary-fixed mb-2">Overall Student Report</h3>
-                            <p class="text-on-surface-variant font-mono-code-sm mb-4">Downloads a complete CSV containing every student's total lectures attended, total possible lectures, and overall percentage.</p>
+                            <p class="text-on-surface-variant font-mono-code-sm mb-4">Downloads a complete report containing every student's total lectures attended, total possible lectures, and overall percentage.</p>
                         </div>
-                        <a href="/api/reports/overall" class="w-full text-center bg-secondary-container/20 text-secondary border border-secondary/50 py-2 rounded-DEFAULT font-mono-code-sm hover:bg-secondary-container hover:text-white transition-colors">Download Overall CSV</a>
+                        <div class="flex gap-2">
+                            <a href="/api/reports/overall" class="flex-1 flex items-center justify-center gap-1 bg-secondary-container/20 text-secondary border border-secondary/50 py-2 rounded-DEFAULT font-mono-code-sm hover:bg-secondary-container hover:text-white transition-colors"><span class="material-symbols-outlined text-sm">description</span> CSV</a>
+                            <a href="/api/reports/overall/pdf" class="flex-1 flex items-center justify-center gap-1 bg-tertiary-container/20 text-tertiary-fixed border border-tertiary-fixed/50 py-2 rounded-DEFAULT font-mono-code-sm hover:bg-tertiary-container hover:text-on-tertiary-container transition-colors"><span class="material-symbols-outlined text-sm">picture_as_pdf</span> PDF</a>
+                        </div>
                     </div>
                     
                     <!-- Defaulters -->
                     <div class="bg-surface-container rounded-lg p-space-md border border-surface-container-highest flex flex-col justify-between">
                         <div>
                             <h3 class="font-headline-sm text-error mb-2">Blacklist Generator (< 75%)</h3>
-                            <p class="text-on-surface-variant font-mono-code-sm mb-4">Downloads a CSV containing ONLY students whose attendance percentage is below the 75% threshold. Automatically marks them as DEFAULTER.</p>
+                            <p class="text-on-surface-variant font-mono-code-sm mb-4">Downloads a report containing ONLY students whose attendance percentage is below the 75% threshold. Automatically marks them as DEFAULTER.</p>
                         </div>
-                        <a href="/api/reports/blacklist" class="w-full text-center bg-error-container/20 text-error border border-error/50 py-2 rounded-DEFAULT font-mono-code-sm hover:bg-error hover:text-white transition-colors">Generate Blacklist CSV</a>
+                        <div class="flex gap-2">
+                            <a href="/api/reports/blacklist" class="flex-1 flex items-center justify-center gap-1 bg-error-container/20 text-error border border-error/50 py-2 rounded-DEFAULT font-mono-code-sm hover:bg-error hover:text-white transition-colors"><span class="material-symbols-outlined text-sm">description</span> CSV</a>
+                            <a href="/api/reports/blacklist/pdf" class="flex-1 flex items-center justify-center gap-1 bg-error-container/20 text-error border border-error/50 py-2 rounded-DEFAULT font-mono-code-sm hover:bg-error hover:text-white transition-colors"><span class="material-symbols-outlined text-sm">picture_as_pdf</span> PDF</a>
+                        </div>
                     </div>
                 </div>
 
@@ -157,7 +163,10 @@
                                 <span class="font-mono-code-sm text-on-surface font-bold">{{ s.roll_no }}</span>
                                 <span class="font-mono-code-sm text-outline">{{ s.name }}</span>
                             </div>
-                            <a href="/api/reports/student/{{ s.roll_no }}" class="material-symbols-outlined text-primary-fixed hover:text-white cursor-pointer" title="Download CSV">download</a>
+                            <div class="flex gap-2 items-center">
+                                <a href="/api/reports/student/{{ s.roll_no }}" class="material-symbols-outlined text-outline hover:text-primary-fixed cursor-pointer transition-colors" title="Download CSV">description</a>
+                                <a href="/api/reports/student/{{ s.roll_no }}/pdf" class="material-symbols-outlined text-outline hover:text-tertiary-fixed cursor-pointer transition-colors" title="Download PDF">picture_as_pdf</a>
+                            </div>
                         </div>
                         {% endfor %}
                     </div>

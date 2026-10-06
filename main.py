@@ -1,6 +1,7 @@
 import json
 import csv
 import io
+from fpdf import FPDF
 from fastapi import FastAPI, Depends, Request, Response, Form, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
@@ -496,3 +497,105 @@ async def student_self_report(request: Request, db: Session = Depends(get_db)):
     
     output.seek(0)
     return StreamingResponse(iter([output.getvalue()]), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=my_attendance_report.csv"})
+
+# ==================== PDF REPORTS ====================
+
+def generate_pdf_table(title: str, headers: list, rows: list):
+    pdf = FPDF(orientation='L' if len(headers) > 6 else 'P')
+    pdf.add_page()
+    pdf.set_font("helvetica", "B", 16)
+    pdf.cell(0, 10, title, align="C")
+    pdf.ln(15)
+    
+    epw = pdf.epw
+    col_width = epw / len(headers)
+    
+    pdf.set_font("helvetica", "B", 10)
+    for header in headers:
+        pdf.cell(col_width, 10, str(header), border=1, align="C")
+    pdf.ln()
+    
+    pdf.set_font("helvetica", "", 10)
+    for row in rows:
+        for item in row:
+            pdf.cell(col_width, 10, str(item), border=1, align="C")
+        pdf.ln()
+        
+    return pdf.output()
+
+@app.get("/api/reports/overall/pdf")
+async def generate_overall_pdf(request: Request, db: Session = Depends(get_db)):
+    t_user = get_teacher_user(request)
+    if not t_user: return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    
+    headers = ["Roll No", "Name", "Semester", "Dept", "Div", "Total Lectures", "Attended", "Percentage"]
+    rows = []
+    students = db.query(Student).all()
+    for s in students:
+        total = db.query(Attendance.timestamp).filter(
+            Attendance.teacher_username == t_user, Attendance.semester == s.semester, Attendance.dept == s.dept, Attendance.div == s.div
+        ).distinct().count()
+        attended = db.query(Attendance).filter(
+            Attendance.teacher_username == t_user, Attendance.roll_no == s.roll_no, Attendance.status == 'Present'
+        ).count()
+        if total == 0: total = 1
+        pct = round((attended/total)*100)
+        rows.append([s.roll_no, s.name, s.semester, s.dept, s.div, total, attended, f"{pct}%"])
+    
+    pdf_bytes = bytes(generate_pdf_table("Overall Student Report", headers, rows))
+    return Response(content=pdf_bytes, media_type="application/pdf", headers={"Content-Disposition": "attachment; filename=overall_report.pdf"})
+
+@app.get("/api/reports/blacklist/pdf")
+async def generate_blacklist_pdf(request: Request, db: Session = Depends(get_db)):
+    t_user = get_teacher_user(request)
+    if not t_user: return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    
+    headers = ["Roll No", "Name", "Semester", "Dept", "Div", "Percentage", "Status"]
+    rows = []
+    students = db.query(Student).all()
+    for s in students:
+        total = db.query(Attendance.timestamp).filter(
+            Attendance.teacher_username == t_user, Attendance.semester == s.semester, Attendance.dept == s.dept, Attendance.div == s.div
+        ).distinct().count()
+        attended = db.query(Attendance).filter(
+            Attendance.teacher_username == t_user, Attendance.roll_no == s.roll_no, Attendance.status == 'Present'
+        ).count()
+        if total == 0: total = 1
+        pct = round((attended/total)*100)
+        if pct < 75:
+            rows.append([s.roll_no, s.name, s.semester, s.dept, s.div, f"{pct}%", "DEFAULTER"])
+            
+    pdf_bytes = bytes(generate_pdf_table("Defaulters Blacklist (< 75%)", headers, rows))
+    return Response(content=pdf_bytes, media_type="application/pdf", headers={"Content-Disposition": "attachment; filename=blacklist.pdf"})
+
+@app.get("/api/reports/student/{roll_no}/pdf")
+async def generate_student_pdf(roll_no: str, request: Request, db: Session = Depends(get_db)):
+    t_user = get_teacher_user(request)
+    if not t_user: return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    
+    student = db.query(Student).filter(Student.roll_no == roll_no).first()
+    if not student: return JSONResponse({"error": "Not Found"}, status_code=404)
+    
+    headers = ["Roll No", "Name", "Subject", "Date", "Time", "Status"]
+    rows = []
+    records = db.query(Attendance).filter(Attendance.teacher_username == t_user, Attendance.roll_no == roll_no).all()
+    for r in records:
+        rows.append([r.roll_no, student.name, r.subject, r.date, r.timestamp.strftime("%H:%M:%S") if r.timestamp else "", r.status])
+        
+    pdf_bytes = bytes(generate_pdf_table(f"Student Report: {roll_no}", headers, rows))
+    return Response(content=pdf_bytes, media_type="application/pdf", headers={"Content-Disposition": f"attachment; filename=student_{roll_no}_report.pdf"})
+
+@app.get("/student/report/pdf")
+async def student_self_report_pdf(request: Request, db: Session = Depends(get_db)):
+    roll_no = get_student_user(request)
+    if not roll_no: return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    
+    student = db.query(Student).filter(Student.roll_no == roll_no).first()
+    headers = ["Subject", "Date", "Time", "Status", "Teacher"]
+    rows = []
+    records = db.query(Attendance).filter(Attendance.roll_no == roll_no).all()
+    for r in records:
+        rows.append([r.subject, r.date, r.timestamp.strftime("%H:%M:%S") if r.timestamp else "", r.status, r.teacher_username])
+        
+    pdf_bytes = bytes(generate_pdf_table(f"My Attendance Report ({roll_no})", headers, rows))
+    return Response(content=pdf_bytes, media_type="application/pdf", headers={"Content-Disposition": "attachment; filename=my_attendance_report.pdf"})
