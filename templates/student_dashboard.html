@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - AI Hub</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
+    <style>
+        .dashboard-grid { display: grid; grid-template-columns: 1fr; gap: 2rem; }
+        @media (min-width: 768px) { .dashboard-grid { grid-template-columns: 1fr 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="text-align:left;">
+                <h1 style="margin-bottom:0;">Welcome, {{ student.name }}</h1>
+                <p style="margin-top:0.5rem; color:var(--text-secondary);">Roll No: {{ student.roll_no }}</p>
+            </div>
+            <div>
+                <a href="/student/logout" class="btn" style="background:#334155; color:white; width:auto; display:inline-block;">Logout</a>
+            </div>
+        </header>
+
+        <main class="dashboard-grid">
+            <!-- Left Column: Face Enrollment -->
+            <section class="card">
+                <h2 style="margin-top:0;">Face Signature Management</h2>
+                
+                {% if has_face %}
+                <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid var(--success); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                    <strong style="color:var(--success);">✅ Face signature is currently enrolled.</strong>
+                    <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem;">You can re-enroll below to update your biometric data.</p>
+                </div>
+                {% else %}
+                <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--error); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                    <strong style="color:var(--error);">⚠️ No face signature found.</strong>
+                    <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem;">Please enroll your face immediately so teachers can mark your attendance.</p>
+                </div>
+                {% endif %}
+
+                <div class="camera-section" style="position:relative; margin-top: 1.5rem;">
+                    <video id="video" autoplay muted playsinline></video>
+                    <canvas id="overlay" style="position:absolute; top:0; left:0;"></canvas>
+                </div>
+
+                <button type="button" class="btn primary-btn" id="captureBtn" style="background-color: var(--success);" disabled>Loading Neural Networks...</button>
+                <div id="status"></div>
+            </section>
+
+            <!-- Right Column: Attendance Records -->
+            <section class="card">
+                <h2 style="margin-top:0;">My Attendance History</h2>
+                {% if records %}
+                <table class="styled-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in records %}
+                        <tr>
+                            <td>{{ record.date }}</td>
+                            <td>
+                                <span class="badge {{ 'present' if record.status == 'Present' else 'absent' }}">
+                                    {{ record.status }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p style="color:var(--text-secondary);">No attendance records found yet.</p>
+                {% endif %}
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const captureBtn = document.getElementById('captureBtn');
+        const statusDiv = document.getElementById('status');
+        const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
+
+        async function init() {
+            try {
+                await Promise.all([
+                    faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+                ]);
+                
+                statusDiv.innerText = "Models Loaded! Starting camera...";
+                statusDiv.className = "info";
+                
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+                
+                video.onloadedmetadata = () => {
+                    captureBtn.disabled = false;
+                    captureBtn.innerText = "Capture & Update Face Data";
+                    statusDiv.innerText = "Ready. Look directly at camera.";
+                };
+            } catch(e) {
+                statusDiv.innerText = "Error initializing: " + e.message;
+                statusDiv.className = "error";
+            }
+        }
+
+        captureBtn.addEventListener('click', async () => {
+            statusDiv.innerText = "Analyzing face quality...";
+            statusDiv.className = "info";
+
+            const detection = await faceapi.detectSingleFace(video).withFaceLandmarks().withFaceDescriptor();
+            if(!detection) {
+                statusDiv.innerText = "No face detected. Please ensure good lighting and look directly at camera.";
+                statusDiv.className = "error";
+                return;
+            }
+
+            // Quality Rules
+            const minFaceSize = 130;
+            const minConfidence = 0.90;
+
+            if (detection.detection.score < minConfidence) {
+                statusDiv.innerText = "Face not clear enough. Please remove obstructions and ensure good lighting.";
+                statusDiv.className = "error";
+                return;
+            }
+
+            if (detection.detection.box.width < minFaceSize || detection.detection.box.height < minFaceSize) {
+                statusDiv.innerText = "Face is too far. Please move closer to the camera.";
+                statusDiv.className = "error";
+                return;
+            }
+
+            // Brightness check on the face area
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = video.videoWidth;
+            tempCanvas.height = video.videoHeight;
+            const ctx = tempCanvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
+            
+            const box = detection.detection.box;
+            // Ensure box is within bounds
+            const x = Math.max(0, box.x);
+            const y = Math.max(0, box.y);
+            const w = Math.min(tempCanvas.width - x, box.width);
+            const h = Math.min(tempCanvas.height - y, box.height);
+            
+            const imageData = ctx.getImageData(x, y, w, h);
+            const data = imageData.data;
+            let sum = 0;
+            for(let i=0; i<data.length; i+=4) {
+                sum += 0.299*data[i] + 0.587*data[i+1] + 0.114*data[i+2]; // Luminance
+            }
+            const avgBrightness = sum / (data.length / 4);
+
+            if (avgBrightness < 50) {
+                statusDiv.innerText = "Image is too dark. Please move to a brighter environment.";
+                statusDiv.className = "error";
+                return;
+            }
+            if (avgBrightness > 210) {
+                statusDiv.innerText = "Image is overexposed. Avoid standing directly in front of bright lights.";
+                statusDiv.className = "error";
+                return;
+            }
+
+            statusDiv.innerText = "Quality checks passed! Saving signature to central database...";
+            const descriptorArray = Array.from(detection.descriptor);
+
+            const payload = {
+                encoding: descriptorArray
+            };
+
+            try {
+                const response = await fetch('/api/enroll_face', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                
+                if(result.status === 'success') {
+                    statusDiv.innerText = "Success! Reloading dashboard...";
+                    statusDiv.className = "success";
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    statusDiv.innerText = result.message;
+                    statusDiv.className = "error";
+                }
+            } catch (error) {
+                statusDiv.innerText = "Server error.";
+                statusDiv.className = "error";
+            }
+        });
+
+        init();
+    </script>
+</body>
+</html>

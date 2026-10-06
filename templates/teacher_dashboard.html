@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard - AI Hub</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card { background: var(--card-bg); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border); text-align: center; }
+        .stat-card h3 { margin: 0; color: var(--text-secondary); font-size: 1rem; }
+        .stat-card p { margin: 0.5rem 0 0 0; font-size: 2.5rem; font-weight: bold; color: var(--accent); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="text-align:left;">
+                <h1 style="margin-bottom:0;">Teacher Dashboard</h1>
+                <p style="margin-top:0.5rem;">Administration & Analytics</p>
+            </div>
+            <div>
+                <a href="/teacher/logout" class="btn" style="background:#334155; color:white; width:auto; display:inline-block;">Logout</a>
+            </div>
+        </header>
+
+        <main>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Enrolled Students</h3>
+                    <p>{{ total_students }}</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Total Attendance Records</h3>
+                    <p>{{ total_records }}</p>
+                </div>
+            </div>
+
+            <div class="card" style="margin-bottom: 2rem; text-align:center; padding: 3rem;">
+                <h2 style="margin-top:0;">Start Classroom Camera</h2>
+                <p style="color:var(--text-secondary); margin-bottom: 2rem;">Launch the live edge inference module to automatically track attendance.</p>
+                <a href="/teacher/edge" class="btn primary-btn" style="width: auto; padding: 1rem 3rem; font-size: 1.2rem;">🎥 Open Live Edge Camera</a>
+            </div>
+
+            <section class="records-section card">
+                <h2 style="margin-top:0;">Recent Attendance Log</h2>
+                <table class="styled-table">
+                    <thead>
+                        <tr>
+                            <th>Roll Number</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in records %}
+                        <tr>
+                            <td>{{ record.roll_no }}</td>
+                            <td>{{ record.date }}</td>
+                            <td>
+                                <span class="badge {{ 'present' if record.status == 'Present' else 'absent' }}">
+                                    {{ record.status }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

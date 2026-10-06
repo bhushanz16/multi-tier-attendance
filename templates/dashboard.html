@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard - Manual CSV Sync</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Centralized DB Sync Dashboard</h1>
+            <p>Phase 4: Manual SQL Commit</p>
+        </header>
+
+        <main class="dashboard-layout">
+            <section class="upload-section card">
+                <h2>Upload Attendance Ledger (CSV)</h2>
+                <form id="uploadForm">
+                    <div class="input-group">
+                        <input type="file" id="csvFile" accept=".csv" required>
+                    </div>
+                    <button type="submit" class="btn primary-btn">Upload & Sync</button>
+                </form>
+                <div id="status"></div>
+            </section>
+
+            <section class="records-section card">
+                <h2>Database Records</h2>
+                <table class="styled-table">
+                    <thead>
+                        <tr>
+                            <th>Roll Number</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in records %}
+                        <tr>
+                            <td>{{ record.roll_no }}</td>
+                            <td>{{ record.date }}</td>
+                            <td>
+                                <span class="badge {{ 'present' if record.status == 'Present' else 'absent' }}">
+                                    {{ record.status }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fileInput = document.getElementById('csvFile');
+            const statusDiv = document.getElementById('status');
+
+            if (fileInput.files.length === 0) return;
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                statusDiv.innerText = "Syncing with SQL Database...";
+                statusDiv.className = "info";
+
+                const response = await fetch('/upload_csv', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                
+                if(result.status === 'success') {
+                    statusDiv.innerText = result.message;
+                    statusDiv.className = "success";
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    statusDiv.innerText = result.message || "Error syncing.";
+                    statusDiv.className = "error";
+                }
+            } catch(e) {
+                statusDiv.innerText = "Server error.";
+                statusDiv.className = "error";
+            }
+        });
+    </script>
+</body>
+</html>

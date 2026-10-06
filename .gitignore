@@ -1,0 +1,7 @@
+myvenv/
+venv/
+__pycache__/
+*.db
+*.sqlite3
+face_recognition_hub/
+.env
