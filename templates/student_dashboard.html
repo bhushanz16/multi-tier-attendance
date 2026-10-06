@@ -1,90 +1,143 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Portal - AI Hub</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Student Node - Synapse Sentinel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet"/>
+    <style>
+        @layer base{html,body{margin:0;padding:0;background-color:#0b1326;color:#dae2fd;}::-webkit-scrollbar{display:none;}}
+        /* Calendar overrides for Dark Theme */
+        .fc-theme-standard .fc-scrollgrid { border-color: #2d3449 !important; }
+        .fc-theme-standard th { border-color: #2d3449 !important; background: rgba(0,0,0,0.2); padding:10px 0; color: #b9cacb;}
+        .fc-theme-standard td { border-color: #2d3449 !important; }
+        .fc-day-today { background: rgba(0, 240, 255, 0.05) !important; }
+        .fc-event { border: none !important; border-radius: 4px !important; padding: 2px 4px; font-weight: bold;}
+        .fc-toolbar-title { color: white !important; font-size: 1.2rem !important; font-family: 'Space Grotesk', sans-serif;}
+        .fc-button-primary { background-color: #00f0ff !important; color:#0b1326 !important; border:none !important; text-transform: capitalize !important;}
+        .video-container { position: relative; width: 100%; border-radius: 4px; overflow: hidden; background: #000; border: 1px solid rgba(0,240,255,0.4); box-shadow: inset 0 0 20px rgba(0,240,255,0.1); }
+        video, canvas { width: 100%; height: auto; display:block; }
+    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="tailwind-config">
+        tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "on-tertiary-container": "#006d4a", "on-secondary": "#4a007f", "secondary": "#deb7ff", "error": "#ffb4ab", "primary": "#dbfcff", "inverse-surface": "#dae2fd", "surface-container-lowest": "#060e20", "on-secondary-container": "#d4a5ff", "on-background": "#dae2fd", "surface-container-highest": "#2d3449", "background": "#0b1326", "inverse-primary": "#006970", "on-secondary-fixed-variant": "#680eac", "tertiary-fixed": "#6ffbbe", "surface-container-high": "#222a3d", "surface-container-low": "#131b2e", "on-primary-fixed-variant": "#004f54", "secondary-fixed": "#f1dbff", "surface-dim": "#0b1326", "on-primary": "#00363a", "primary-fixed": "#7df4ff", "on-error": "#690005", "on-surface": "#dae2fd", "surface-tint": "#00dbe9", "tertiary": "#d8ffe7", "on-tertiary-fixed": "#002113", "on-tertiary-fixed-variant": "#005236", "surface-container": "#171f33", "on-primary-container": "#006970", "on-secondary-fixed": "#2d0050", "surface-variant": "#2d3449", "surface-bright": "#31394d", "on-primary-fixed": "#002022", "secondary-container": "#6b13af", "on-tertiary": "#003824", "tertiary-container": "#65f2b5", "surface": "#0b1326", "primary-container": "#00f0ff", "tertiary-fixed-dim": "#4edea3", "on-surface-variant": "#b9cacb", "on-error-container": "#ffdad6", "inverse-on-surface": "#283044", "secondary-fixed-dim": "#deb7ff", "outline-variant": "#3b494b", "primary-fixed-dim": "#00dbe9", "outline": "#849495", "error-container": "#93000a" }, "borderRadius": { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }, "spacing": { "space-lg": "1rem", "gutter-dense": "0.375rem", "space-md": "0.75rem", "gutter": "0.75rem", "space-sm": "0.5rem", "space-xl": "1.5rem", "margin-compact": "0.5rem", "margin": "1rem", "space-xs": "0.25rem" }, "fontFamily": { "mono-metric-lg": [ "JetBrains Mono" ], "mono-code-sm": [ "JetBrains Mono" ], "body-sm": [ "Inter" ], "headline-sm": [ "Space Grotesk" ], "display-lg": [ "Space Grotesk" ], "body-md": [ "Inter" ], "label-caps": [ "JetBrains Mono" ], "mono-metric-md": [ "JetBrains Mono" ], "headline-lg": [ "Space Grotesk" ], "body-lg": [ "Inter" ] }, "fontSize": { "mono-metric-lg": [ "18px", { "lineHeight": "24px", "letterSpacing": "-0.02em", "fontWeight": "600" } ], "mono-code-sm": [ "11px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "400" } ], "body-sm": [ "11px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "400" } ], "headline-sm": [ "18px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "600" } ], "display-lg": [ "32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" } ], "body-md": [ "13px", { "lineHeight": "18px", "letterSpacing": "0em", "fontWeight": "400" } ], "label-caps": [ "10px", { "lineHeight": "12px", "letterSpacing": "0.08em", "fontWeight": "700" } ], "mono-metric-md": [ "13px", { "lineHeight": "18px", "letterSpacing": "0em", "fontWeight": "500" } ], "headline-lg": [ "24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" } ], "body-lg": [ "15px", { "lineHeight": "22px", "letterSpacing": "-0.005em", "fontWeight": "400" } ] } } } };
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
-    <style>
-        .layout { display: grid; grid-template-columns: 350px 1fr; gap: 2rem; margin-top: 2rem; }
-        @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
-        #calendar { min-height: 500px; }
-    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body>
-    <div class="container">
-        <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
-            <div>
-                <h1 style="margin-bottom:0; font-size:2rem; background: -webkit-linear-gradient(#60a5fa, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Student Space</h1>
-                <p style="margin-top:0.5rem; color:var(--text-secondary);">{{ student.name }} • {{ student.semester }} Semester • {{ student.dept }} • Div {{ student.div }}</p>
+<body class="bg-background font-body-md text-on-surface antialiased">
+    
+    <!-- HEADER -->
+    <header class="h-14 bg-surface-container-lowest border-b border-surface-container-highest flex items-center justify-between px-space-lg shadow-[0_1px_8px_rgba(0,0,0,0.3)]">
+        <div class="flex items-center gap-space-md">
+            <span class="material-symbols-outlined text-secondary-fixed text-2xl">shield_person</span>
+            <div class="flex flex-col">
+                <span class="font-headline-sm text-headline-sm text-secondary-fixed tracking-tight leading-none">STUDENT PROFILE NODE</span>
+                <span class="font-label-caps text-label-caps text-outline uppercase tracking-wider">SEC-EMP-{{ student.roll_no }}</span>
             </div>
-            <a href="/student/logout" class="btn" style="background:rgba(255,255,255,0.1); color:white;">Logout</a>
-        </header>
+        </div>
+        <div class="flex items-center gap-space-md">
+            <div class="flex flex-col text-right hidden sm:flex">
+                <span class="font-mono-metric-md text-mono-metric-md text-on-surface leading-tight">{{ student.name|upper }}</span>
+                <span class="font-label-caps text-label-caps text-outline">{{ student.semester }} | {{ student.dept|upper }} | DIV_{{ student.div }}</span>
+            </div>
+            <div class="h-6 w-[1px] bg-surface-container-highest"></div>
+            <a href="/student/logout" class="flex items-center gap-gutter-dense bg-error-container/10 border border-error/30 text-error hover:bg-error hover:text-white font-headline-sm text-mono-code-sm px-space-sm py-space-xs rounded-DEFAULT transition-all" style="text-decoration:none;">
+                <span class="material-symbols-outlined text-sm">logout</span>
+                <span>DISCONNECT</span>
+            </a>
+        </div>
+    </header>
 
-        <main class="layout">
-            <!-- Sidebar: Face Enrollment & Analytics -->
-            <div style="display:flex; flex-direction:column; gap:1.5rem;">
-                <div class="card" style="text-align:center;">
-                    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" width="80" style="margin-bottom:1rem; opacity:0.8;">
-                    <h2 style="margin-top:0;">Biometric Profile</h2>
+    <main class="w-full max-w-[1400px] mx-auto p-space-lg grid grid-cols-1 xl:grid-cols-3 gap-space-lg">
+        
+        <!-- SIDEBAR -->
+        <div class="xl:col-span-1 space-y-space-lg">
+            
+            <!-- BIOMETRIC REGISTRATION -->
+            <div class="bg-surface-container-low rounded-xl p-space-md shadow-xl border border-surface-container-highest">
+                <div class="flex flex-col items-center text-center">
+                    <span class="material-symbols-outlined text-primary-fixed text-5xl mb-2">face_retouching_natural</span>
+                    <h2 class="font-headline-sm text-headline-sm text-primary tracking-tight">Biometric Signature</h2>
                     
-                    {% if has_face %}
-                    <div style="background: rgba(16,185,129,0.1); border: 1px solid var(--success); padding: 1rem; border-radius: 8px;">
-                        <span style="color:var(--success); font-weight:bold;">✅ Face Enrolled Successfully</span>
+                    <div class="w-full mt-4 mb-4">
+                        {% if has_face %}
+                        <div class="bg-tertiary-container/10 border border-tertiary-container/50 p-space-sm rounded-DEFAULT flex items-center justify-center gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-tertiary-container animate-pulse"></span>
+                            <span class="text-tertiary-fixed font-mono-code-sm text-label-caps">SIGNATURE SECURED & ACTIVE</span>
+                        </div>
+                        {% else %}
+                        <div class="bg-error-container/10 border border-error/50 p-space-sm rounded-DEFAULT flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined text-error text-sm">warning</span>
+                            <span class="text-error font-mono-code-sm text-label-caps">ACTION REQ: NO SIGNATURE FOUND</span>
+                        </div>
+                        {% endif %}
                     </div>
-                    {% else %}
-                    <div style="background: rgba(239,68,68,0.1); border: 1px solid var(--error); padding: 1rem; border-radius: 8px;">
-                        <span style="color:var(--error); font-weight:bold;">⚠️ Action Required: Enroll Face</span>
-                    </div>
-                    {% endif %}
 
-                    <div style="position:relative; margin-top:1.5rem; border-radius:12px; overflow:hidden; background:#000;">
-                        <video id="video" autoplay muted playsinline style="width:100%; display:block;"></video>
-                        <canvas id="overlay" style="position:absolute; top:0; left:0; width:100%;"></canvas>
+                    <div class="video-container">
+                        <video id="video" autoplay muted playsinline></video>
+                        <canvas id="overlay"></canvas>
                     </div>
 
-                    <button id="captureBtn" class="btn primary-btn" style="margin-top:1rem;" disabled>Loading Scanner...</button>
-                    <div id="status" style="margin-top:1rem; font-size:0.9rem; color:var(--text-secondary);"></div>
+                    <button id="captureBtn" disabled class="w-full mt-4 flex items-center justify-center gap-space-xs bg-primary-container/10 border border-primary-container text-primary-fixed hover:bg-primary-container hover:text-on-primary-container font-headline-sm text-mono-code-sm py-space-sm rounded-DEFAULT shadow-[0_0_10px_rgba(0,240,255,0.2)] transition-all">
+                        <span class="material-symbols-outlined text-base">center_focus_strong</span>
+                        <span>UPDATE BIOMETRIC VECTOR</span>
+                    </button>
+                    <div id="status" class="mt-2 font-mono-code-sm text-outline text-label-caps">Mounting hardware...</div>
                 </div>
+            </div>
 
-                <div class="card">
-                    <h2 style="margin-top:0; text-align:center;">Subject Analytics</h2>
-                    <div style="display:flex; justify-content:center; max-height:200px; margin-bottom:1rem;">
-                        <canvas id="subjectChart"></canvas>
-                    </div>
-                    <table class="styled-table" style="font-size:0.85rem;">
-                        <thead>
+            <!-- ANALYTICS CARD -->
+            <div class="bg-surface-container-low rounded-xl p-space-md shadow-xl border border-surface-container-highest">
+                <div class="flex items-center gap-space-xs mb-space-md border-b border-surface-container-highest pb-space-sm">
+                    <span class="material-symbols-outlined text-secondary-fixed text-lg">donut_small</span>
+                    <h2 class="font-headline-sm text-headline-sm text-secondary-fixed">Sub-Routine Analytics</h2>
+                </div>
+                
+                <div class="flex justify-center mb-space-md" style="height:180px;">
+                    <canvas id="subjectChart"></canvas>
+                </div>
+                
+                <div class="overflow-x-auto rounded-lg border border-surface-container-highest">
+                    <table class="w-full text-left font-mono-code-sm text-mono-code-sm">
+                        <thead class="bg-surface-container-lowest text-outline font-label-caps text-label-caps uppercase">
                             <tr>
-                                <th>Subject</th>
-                                <th>Attended / Total</th>
-                                <th>%</th>
+                                <th class="py-space-xs px-space-sm">Sub-Routine (Subject)</th>
+                                <th class="py-space-xs px-space-sm text-right">Hit/Total</th>
+                                <th class="py-space-xs px-space-sm text-right">Ratio</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="divide-y divide-surface-container-highest/50">
                             {% for a in analytics %}
-                            <tr>
-                                <td>{{ a.subject }}</td>
-                                <td>{{ a.attended }} / {{ a.total }}</td>
-                                <td><span style="color: {{ 'var(--success)' if a.percentage >= 75 else 'var(--error)' }}; font-weight:bold;">{{ a.percentage }}%</span></td>
+                            <tr class="bg-surface-container/60">
+                                <td class="py-space-sm px-space-sm text-on-surface">{{ a.subject }}</td>
+                                <td class="py-space-sm px-space-sm text-right text-outline">{{ a.attended }} / {{ a.total }}</td>
+                                <td class="py-space-sm px-space-sm text-right">
+                                    {% if a.percentage >= 75 %}
+                                        <span class="text-tertiary-fixed">{{ a.percentage }}%</span>
+                                    {% else %}
+                                        <span class="text-error">{{ a.percentage }}%</span>
+                                    {% endif %}
+                                </td>
                             </tr>
                             {% endfor %}
-                            {% if not analytics %}
-                            <tr><td colspan="3" style="text-align:center;">No data yet.</td></tr>
-                            {% endif %}
                         </tbody>
                     </table>
                 </div>
             </div>
+        </div>
 
-            <!-- Main Content: Calendar -->
-            <div class="card" style="padding: 1.5rem;">
-                <h2 style="margin-top:0; margin-bottom:1.5rem; border-bottom: 1px solid var(--border); padding-bottom:1rem;">My Attendance Calendar</h2>
+        <!-- MAIN CALENDAR -->
+        <div class="xl:col-span-2">
+            <div class="bg-surface-container-low rounded-xl p-space-lg shadow-xl border border-surface-container-highest h-full min-h-[600px]">
                 <div id='calendar'></div>
             </div>
-        </main>
-    </div>
+        </div>
+    </main>
 
     <script>
         // Initialize Calendar
@@ -94,14 +147,10 @@
             
             var calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,timeGridWeek'
-                },
+                headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
                 events: eventsData,
                 eventContent: function(arg) {
-                    return { html: `<div style="text-align:center; padding:2px; font-size:0.85rem;">${arg.event.title}</div>` };
+                    return { html: `<div style="text-align:center; padding:2px; font-size:10px; font-family:'JetBrains Mono';">${arg.event.title}</div>` };
                 }
             });
             calendar.render();
@@ -117,7 +166,7 @@
                         labels: chartLabels,
                         datasets: [{
                             data: chartData,
-                            backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
+                            backgroundColor: ['#00f0ff', '#deb7ff', '#65f2b5', '#ef4444', '#3b82f6'],
                             borderWidth: 0
                         }]
                     },
@@ -143,20 +192,20 @@
                 video.srcObject = stream;
                 video.onloadedmetadata = () => {
                     captureBtn.disabled = false;
-                    captureBtn.innerText = "Re-Enroll Face";
-                    statusDiv.innerText = "Camera Active";
+                    statusDiv.innerText = "OPTICAL SENSOR READY.";
                 };
-            } catch(e) { statusDiv.innerText = "Error: " + e.message; }
+            } catch(e) { statusDiv.innerText = "[ERR] " + e.message; }
         }
 
         captureBtn.addEventListener('click', async () => {
-            statusDiv.innerText = "Processing biometric data...";
+            statusDiv.innerText = "[SYS] Parsing facial landmarks...";
             const detection = await faceapi.detectSingleFace(video).withFaceLandmarks().withFaceDescriptor();
-            if(!detection) { statusDiv.innerText = "Face not detected clearly."; return; }
+            if(!detection) { statusDiv.innerText = "[ERR] No subject detected."; return; }
             if (detection.detection.score < 0.90 || detection.detection.box.width < 100) {
-                statusDiv.innerText = "Move closer to the camera and ensure good lighting."; return;
+                statusDiv.innerText = "[ERR] Low confidence or distance too great."; return;
             }
 
+            statusDiv.innerText = "[SYS] Uploading Hash...";
             const response = await fetch('/api/enroll_face', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -164,7 +213,7 @@
             });
             const result = await response.json();
             if(result.status === 'success') location.reload();
-            else statusDiv.innerText = "Failed to save.";
+            else statusDiv.innerText = "[ERR] DB Sync Failed.";
         });
         initCamera();
     </script>

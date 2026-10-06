@@ -1,27 +1,67 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multi-Tier AI Hub</title>
-    <link rel="stylesheet" href="/static/style.css">
-    <link rel="manifest" href="/static/manifest.json">
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Synapse Sentinel - Enterprise Edge SOC</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet"/>
+    <style>@layer base{html,body{margin:0;padding:0;background-color:#0b1326;color:#dae2fd;}::-webkit-scrollbar{display:none;}}</style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="tailwind-config">
+        tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "on-tertiary-container": "#006d4a", "on-secondary": "#4a007f", "secondary": "#deb7ff", "error": "#ffb4ab", "primary": "#dbfcff", "inverse-surface": "#dae2fd", "surface-container-lowest": "#060e20", "on-secondary-container": "#d4a5ff", "on-background": "#dae2fd", "surface-container-highest": "#2d3449", "background": "#0b1326", "inverse-primary": "#006970", "on-secondary-fixed-variant": "#680eac", "tertiary-fixed": "#6ffbbe", "surface-container-high": "#222a3d", "surface-container-low": "#131b2e", "on-primary-fixed-variant": "#004f54", "secondary-fixed": "#f1dbff", "surface-dim": "#0b1326", "on-primary": "#00363a", "primary-fixed": "#7df4ff", "on-error": "#690005", "on-surface": "#dae2fd", "surface-tint": "#00dbe9", "tertiary": "#d8ffe7", "on-tertiary-fixed": "#002113", "on-tertiary-fixed-variant": "#005236", "surface-container": "#171f33", "on-primary-container": "#006970", "on-secondary-fixed": "#2d0050", "surface-variant": "#2d3449", "surface-bright": "#31394d", "on-primary-fixed": "#002022", "secondary-container": "#6b13af", "on-tertiary": "#003824", "tertiary-container": "#65f2b5", "surface": "#0b1326", "primary-container": "#00f0ff", "tertiary-fixed-dim": "#4edea3", "on-surface-variant": "#b9cacb", "on-error-container": "#ffdad6", "inverse-on-surface": "#283044", "secondary-fixed-dim": "#deb7ff", "outline-variant": "#3b494b", "primary-fixed-dim": "#00dbe9", "outline": "#849495", "error-container": "#93000a" }, "borderRadius": { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }, "spacing": { "space-lg": "1rem", "gutter-dense": "0.375rem", "space-md": "0.75rem", "gutter": "0.75rem", "space-sm": "0.5rem", "space-xl": "1.5rem", "margin-compact": "0.5rem", "margin": "1rem", "space-xs": "0.25rem" }, "fontFamily": { "mono-metric-lg": [ "JetBrains Mono" ], "mono-code-sm": [ "JetBrains Mono" ], "body-sm": [ "Inter" ], "headline-sm": [ "Space Grotesk" ], "display-lg": [ "Space Grotesk" ], "body-md": [ "Inter" ], "label-caps": [ "JetBrains Mono" ], "mono-metric-md": [ "JetBrains Mono" ], "headline-lg": [ "Space Grotesk" ], "body-lg": [ "Inter" ] }, "fontSize": { "mono-metric-lg": [ "18px", { "lineHeight": "24px", "letterSpacing": "-0.02em", "fontWeight": "600" } ], "mono-code-sm": [ "11px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "400" } ], "body-sm": [ "11px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "400" } ], "headline-sm": [ "18px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "600" } ], "display-lg": [ "32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" } ], "body-md": [ "13px", { "lineHeight": "18px", "letterSpacing": "0em", "fontWeight": "400" } ], "label-caps": [ "10px", { "lineHeight": "12px", "letterSpacing": "0.08em", "fontWeight": "700" } ], "mono-metric-md": [ "13px", { "lineHeight": "18px", "letterSpacing": "0em", "fontWeight": "500" } ], "headline-lg": [ "24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" } ], "body-lg": [ "15px", { "lineHeight": "22px", "letterSpacing": "-0.005em", "fontWeight": "400" } ] } } } };
+    </script>
 </head>
-<body>
-    <div class="container" style="text-align: center; max-width: 600px; margin-top: 10vh;">
-        <header>
-            <h1 style="font-size: 3rem; margin-bottom: 0.5rem;">Multi-Tier AI Hub</h1>
-            <p style="font-size: 1.2rem; margin-bottom: 3rem;">Facial Recognition Attendance System</p>
-        </header>
-
-        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-            <a href="/teacher/login" class="btn primary-btn" style="padding: 1.5rem; font-size: 1.2rem; background: linear-gradient(135deg, #3b82f6, #2563eb);">
-                👨‍🏫 Teacher Portal
-            </a>
+<body class="bg-background font-body-md text-on-surface antialiased flex items-center justify-center min-h-screen relative overflow-hidden">
+    <!-- Background Decor -->
+    <div class="absolute -right-20 -top-20 w-96 h-96 bg-primary-container/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -left-20 -bottom-20 w-80 h-80 bg-secondary-container/15 rounded-full blur-3xl pointer-events-none"></div>
+    
+    <div class="w-full max-w-4xl p-space-lg relative z-10">
+        <div class="flex flex-col items-center text-center space-y-space-md mb-space-xl">
+            <div class="flex items-center justify-center gap-space-sm font-label-caps text-label-caps text-primary-fixed-dim bg-surface-container-low px-space-sm py-gutter-dense rounded-DEFAULT border border-primary-container/30">
+                <span class="w-2 h-2 rounded-full bg-primary-container animate-pulse shadow-[0_0_8px_rgba(0,240,255,0.7)]"></span>
+                <span>SYSTEM ONLINE: CLOUD SOC CONNECTED</span>
+            </div>
             
-            <a href="/student/login" class="btn primary-btn" style="padding: 1.5rem; font-size: 1.2rem; background: linear-gradient(135deg, #10b981, #059669);">
-                🎓 Student Portal
+            <h1 class="font-display-lg text-[48px] font-bold tracking-tight text-white leading-none">SYNAPSE SENTINEL</h1>
+            <p class="font-mono-code-sm text-outline tracking-wider uppercase max-w-xl mx-auto">
+                Decentralized Biometric Auditing & Inference Edge Nodes. Select your terminal access clearance below.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-space-lg">
+            
+            <!-- Student Portal Link -->
+            <a href="/student/login" class="group relative bg-surface-container-lowest rounded-xl p-space-lg border border-surface-container-highest hover:border-secondary transition-all shadow-xl" style="text-decoration:none;">
+                <div class="absolute inset-0 bg-secondary-container/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl"></div>
+                <div class="relative z-10 flex flex-col items-center text-center space-y-space-md">
+                    <div class="w-16 h-16 rounded-full bg-secondary-container/20 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-secondary-fixed text-3xl">fingerprint</span>
+                    </div>
+                    <div>
+                        <h2 class="font-headline-sm text-headline-sm text-secondary-fixed mb-1">Student Node</h2>
+                        <p class="font-body-sm text-body-sm text-on-surface-variant">Access biometric signatures and attendance telemetry.</p>
+                    </div>
+                </div>
             </a>
+
+            <!-- Teacher Portal Link -->
+            <a href="/teacher/login" class="group relative bg-surface-container-lowest rounded-xl p-space-lg border border-surface-container-highest hover:border-primary transition-all shadow-xl" style="text-decoration:none;">
+                <div class="absolute inset-0 bg-primary-container/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl"></div>
+                <div class="relative z-10 flex flex-col items-center text-center space-y-space-md">
+                    <div class="w-16 h-16 rounded-full bg-primary-container/20 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-primary-fixed text-3xl">admin_panel_settings</span>
+                    </div>
+                    <div>
+                        <h2 class="font-headline-sm text-headline-sm text-primary-fixed mb-1">Admin SOC</h2>
+                        <p class="font-body-sm text-body-sm text-on-surface-variant">Deploy edge scanners and audit offline stashes.</p>
+                    </div>
+                </div>
+            </a>
+
         </div>
     </div>
 </body>
