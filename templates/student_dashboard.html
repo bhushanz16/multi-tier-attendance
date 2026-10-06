@@ -3,146 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Dashboard - AI Hub</title>
+    <title>Student Portal - AI Hub</title>
     <link rel="stylesheet" href="/static/style.css">
     <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <style>
-        .dashboard-grid { display: grid; grid-template-columns: 1fr; gap: 2rem; }
-        @media (min-width: 900px) { .dashboard-grid { grid-template-columns: 1fr 1fr; } }
-        .chart-box { max-height: 250px; display:flex; justify-content:center; margin-bottom: 2rem; }
+        .layout { display: grid; grid-template-columns: 350px 1fr; gap: 2rem; margin-top: 2rem; }
+        @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+        #calendar { min-height: 500px; }
     </style>
 </head>
 <body>
-    <div class="container" style="max-width: 1000px;">
-        <header style="display:flex; justify-content:space-between; align-items:center;">
-            <div style="text-align:left;">
-                <h1 style="margin-bottom:0;">Welcome, {{ student.name }}</h1>
-                <p style="margin-top:0.5rem; color:var(--text-secondary);">Class: <strong>{{ student.class_name }}</strong> | Roll No: {{ student.roll_no }}</p>
-            </div>
+    <div class="container">
+        <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
             <div>
-                <a href="/student/logout" class="btn" style="background:#334155; color:white; width:auto; display:inline-block;">Logout</a>
+                <h1 style="margin-bottom:0; font-size:2rem; background: -webkit-linear-gradient(#60a5fa, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Student Space</h1>
+                <p style="margin-top:0.5rem; color:var(--text-secondary);">{{ student.name }} • {{ student.year }} Year • {{ student.dept }} • Div {{ student.div }}</p>
             </div>
+            <a href="/student/logout" class="btn" style="background:rgba(255,255,255,0.1); color:white;">Logout</a>
         </header>
 
-        <main class="dashboard-grid">
-            <!-- Left Column -->
-            <div style="display:flex; flex-direction:column; gap:2rem;">
-                <section class="card">
-                    <h2 style="margin-top:0;">Subject-Wise Performance</h2>
-                    <div class="chart-box">
-                        <canvas id="attendanceChart"></canvas>
-                    </div>
+        <main class="layout">
+            <!-- Sidebar: Face Enrollment -->
+            <div style="display:flex; flex-direction:column; gap:1.5rem;">
+                <div class="card" style="text-align:center;">
+                    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" width="80" style="margin-bottom:1rem; opacity:0.8;">
+                    <h2 style="margin-top:0;">Biometric Profile</h2>
                     
-                    <table class="styled-table">
-                        <thead>
-                            <tr>
-                                <th>Subject</th>
-                                <th>Attended</th>
-                                <th>Total</th>
-                                <th>%</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for a in analytics %}
-                            <tr>
-                                <td>{{ a.subject }}</td>
-                                <td>{{ a.attended }}</td>
-                                <td>{{ a.total }}</td>
-                                <td><span style="color: {{ 'var(--success)' if a.percentage >= 75 else 'var(--error)' }}; font-weight:bold;">{{ a.percentage }}%</span></td>
-                            </tr>
-                            {% endfor %}
-                            {% if not analytics %}
-                            <tr><td colspan="4" style="text-align:center;">No subject data available.</td></tr>
-                            {% endif %}
-                        </tbody>
-                    </table>
-                </section>
-
-                <section class="card">
-                    <h2 style="margin-top:0;">Recent Activity</h2>
-                    {% if records %}
-                    <table class="styled-table">
-                        <thead>
-                            <tr>
-                                <th>Date/Time</th>
-                                <th>Subject</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for record in records[:5] %}
-                            <tr>
-                                <td>{{ record.timestamp.strftime('%b %d, %H:%M') if record.timestamp else record.date }}</td>
-                                <td>{{ record.subject }}</td>
-                                <td>
-                                    <span class="badge {{ 'present' if record.status == 'Present' else 'absent' }}">
-                                        {{ record.status }}
-                                    </span>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                    {% if has_face %}
+                    <div style="background: rgba(16,185,129,0.1); border: 1px solid var(--success); padding: 1rem; border-radius: 8px;">
+                        <span style="color:var(--success); font-weight:bold;">✅ Face Enrolled Successfully</span>
+                    </div>
                     {% else %}
-                    <p style="color:var(--text-secondary);">No attendance records found yet.</p>
+                    <div style="background: rgba(239,68,68,0.1); border: 1px solid var(--error); padding: 1rem; border-radius: 8px;">
+                        <span style="color:var(--error); font-weight:bold;">⚠️ Action Required: Enroll Face</span>
+                    </div>
                     {% endif %}
-                </section>
+
+                    <div style="position:relative; margin-top:1.5rem; border-radius:12px; overflow:hidden; background:#000;">
+                        <video id="video" autoplay muted playsinline style="width:100%; display:block;"></video>
+                        <canvas id="overlay" style="position:absolute; top:0; left:0; width:100%;"></canvas>
+                    </div>
+
+                    <button id="captureBtn" class="btn primary-btn" style="margin-top:1rem;" disabled>Loading Scanner...</button>
+                    <div id="status" style="margin-top:1rem; font-size:0.9rem; color:var(--text-secondary);"></div>
+                </div>
             </div>
 
-            <!-- Right Column -->
-            <section class="card">
-                <h2 style="margin-top:0;">Biometric Enrollment</h2>
-                
-                {% if has_face %}
-                <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid var(--success); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
-                    <strong style="color:var(--success);">✅ Face signature is currently enrolled.</strong>
-                    <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem;">You can re-enroll below to update your biometric data.</p>
-                </div>
-                {% else %}
-                <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--error); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
-                    <strong style="color:var(--error);">⚠️ No face signature found.</strong>
-                    <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem;">Please enroll your face immediately so teachers can mark your attendance.</p>
-                </div>
-                {% endif %}
-
-                <div class="camera-section" style="position:relative; margin-top: 1.5rem;">
-                    <video id="video" autoplay muted playsinline></video>
-                    <canvas id="overlay" style="position:absolute; top:0; left:0;"></canvas>
-                </div>
-
-                <button type="button" class="btn primary-btn" id="captureBtn" style="background-color: var(--success);" disabled>Loading Neural Networks...</button>
-                <div id="status"></div>
-            </section>
+            <!-- Main Content: Calendar -->
+            <div class="card" style="padding: 1.5rem;">
+                <h2 style="margin-top:0; margin-bottom:1.5rem; border-bottom: 1px solid var(--border); padding-bottom:1rem;">My Attendance Calendar</h2>
+                <div id='calendar'></div>
+            </div>
         </main>
     </div>
 
     <script>
-        // Chart Initialization
-        const ctx = document.getElementById('attendanceChart').getContext('2d');
-        const chartLabels = JSON.parse('{{ chart_labels | safe }}');
-        const chartData = JSON.parse('{{ chart_data | safe }}');
-
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: chartLabels,
-                datasets: [{
-                    data: chartData,
-                    backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'right', labels: { color: '#f8fafc' } }
+        // Initialize Calendar
+        document.addEventListener('DOMContentLoaded', function() {
+            var calendarEl = document.getElementById('calendar');
+            var eventsData = JSON.parse('{{ calendar_events | safe }}');
+            
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek'
+                },
+                events: eventsData,
+                eventContent: function(arg) {
+                    return { html: `<div style="text-align:center; padding:2px; font-size:0.85rem;">${arg.event.title}</div>` };
                 }
-            }
+            });
+            calendar.render();
         });
 
-        // Camera Initialization
+        // Camera Logic
         const video = document.getElementById('video');
         const captureBtn = document.getElementById('captureBtn');
         const statusDiv = document.getElementById('status');
@@ -155,77 +92,33 @@
                     faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
                     faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
                 ]);
-                
-                statusDiv.innerText = "Models Loaded! Starting camera...";
-                statusDiv.className = "info";
-                
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 video.srcObject = stream;
-                
                 video.onloadedmetadata = () => {
                     captureBtn.disabled = false;
-                    captureBtn.innerText = "Capture & Update Face Data";
-                    statusDiv.innerText = "Ready. Look directly at camera.";
+                    captureBtn.innerText = "Re-Enroll Face";
+                    statusDiv.innerText = "Camera Active";
                 };
-            } catch(e) {
-                statusDiv.innerText = "Error initializing: " + e.message;
-                statusDiv.className = "error";
-            }
+            } catch(e) { statusDiv.innerText = "Error: " + e.message; }
         }
 
         captureBtn.addEventListener('click', async () => {
-            statusDiv.innerText = "Analyzing face quality...";
-            statusDiv.className = "info";
-
+            statusDiv.innerText = "Processing biometric data...";
             const detection = await faceapi.detectSingleFace(video).withFaceLandmarks().withFaceDescriptor();
-            if(!detection) {
-                statusDiv.innerText = "No face detected. Please ensure good lighting and look directly at camera.";
-                statusDiv.className = "error";
-                return;
+            if(!detection) { statusDiv.innerText = "Face not detected clearly."; return; }
+            if (detection.detection.score < 0.90 || detection.detection.box.width < 100) {
+                statusDiv.innerText = "Move closer to the camera and ensure good lighting."; return;
             }
 
-            const minFaceSize = 130;
-            const minConfidence = 0.90;
-
-            if (detection.detection.score < minConfidence) {
-                statusDiv.innerText = "Face not clear enough. Please remove obstructions and ensure good lighting.";
-                statusDiv.className = "error";
-                return;
-            }
-
-            if (detection.detection.box.width < minFaceSize || detection.detection.box.height < minFaceSize) {
-                statusDiv.innerText = "Face is too far. Please move closer to the camera.";
-                statusDiv.className = "error";
-                return;
-            }
-
-            statusDiv.innerText = "Quality checks passed! Saving signature to central database...";
-            const descriptorArray = Array.from(detection.descriptor);
-
-            const payload = { encoding: descriptorArray };
-
-            try {
-                const response = await fetch('/api/enroll_face', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(payload)
-                });
-                const result = await response.json();
-                
-                if(result.status === 'success') {
-                    statusDiv.innerText = "Success! Reloading dashboard...";
-                    statusDiv.className = "success";
-                    setTimeout(() => location.reload(), 1500);
-                } else {
-                    statusDiv.innerText = result.message;
-                    statusDiv.className = "error";
-                }
-            } catch (error) {
-                statusDiv.innerText = "Server error.";
-                statusDiv.className = "error";
-            }
+            const response = await fetch('/api/enroll_face', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ encoding: Array.from(detection.descriptor) })
+            });
+            const result = await response.json();
+            if(result.status === 'success') location.reload();
+            else statusDiv.innerText = "Failed to save.";
         });
-
         initCamera();
     </script>
 </body>

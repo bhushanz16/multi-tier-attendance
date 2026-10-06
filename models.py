@@ -15,7 +15,9 @@ class Student(Base):
     roll_no = Column(String, unique=True, index=True)
     name = Column(String)
     password = Column(String)
-    class_name = Column(String)  # New field: e.g., 'CS-A', 'Grade 10'
+    year = Column(String) # e.g., '1st', '2nd', '3rd', '4th'
+    dept = Column(String) # e.g., 'Computer', 'Mechanical'
+    div = Column(String)  # e.g., 'A', 'B'
     face_encoding = Column(String, nullable=True)
 
 class Attendance(Base):
@@ -23,7 +25,9 @@ class Attendance(Base):
     id = Column(Integer, primary_key=True, index=True)
     roll_no = Column(String, index=True)
     date = Column(Date, index=True)
-    timestamp = Column(DateTime) # Precise time of scan
-    subject = Column(String, index=True) # e.g., 'Mathematics'
-    class_name = Column(String, index=True) # e.g., 'CS-A'
+    timestamp = Column(DateTime)
+    subject = Column(String, index=True)
+    year = Column(String, index=True)
+    dept = Column(String, index=True)
+    div = Column(String, index=True)
     status = Column(String)

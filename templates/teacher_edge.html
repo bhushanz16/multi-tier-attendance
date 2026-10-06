@@ -3,64 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teacher Edge Inference - Mobile Ready</title>
+    <title>AI Edge Scanner</title>
     <link rel="stylesheet" href="/static/style.css">
     <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
     <style>
         .edge-layout { display: flex; flex-direction: column; gap: 1rem; align-items: center; }
-        .video-container { position: relative; width: 100%; max-width: 600px; background: #000; border-radius: 8px; overflow: hidden; display: none; }
-        video, canvas { width: 100%; height: auto; }
+        .video-container { position: relative; width: 100%; max-width: 600px; background: #000; border-radius: 12px; overflow: hidden; display: none; border:2px solid var(--accent);}
+        video, canvas { width: 100%; height: auto; display:block;}
         canvas { position: absolute; top: 0; left: 0; }
-        .controls { width: 100%; max-width: 600px; display: none; gap: 1rem; margin-top: 1rem; }
         .setup-card { background: var(--card-bg); padding: 2rem; border-radius: 12px; border: 1px solid var(--border); width: 100%; max-width: 600px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>Teacher Edge Console</h1>
-            <p>Live Classroom Recognition</p>
-            <div style="display:flex; justify-content:center; gap: 1rem; margin-top: 0.5rem;">
-                <a href="/teacher/dashboard" style="color:var(--text-secondary); text-decoration:none; font-size:0.9rem;">← Back to Dashboard</a>
-                <span style="color:var(--border);">|</span>
-                <a href="/teacher/logout" style="color:var(--text-secondary); text-decoration:none; font-size:0.9rem;">Logout</a>
-            </div>
+        <header style="text-align:center;">
+            <h1 style="background: -webkit-linear-gradient(#f59e0b, #ef4444); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Live Edge Scanner</h1>
+            <a href="/teacher/dashboard" style="color:var(--text-secondary); text-decoration:none;">← Back to Admin Panel</a>
         </header>
 
         <main class="edge-layout">
-            
             <div id="setupDiv" class="setup-card">
-                <h3 style="margin-top:0;">Start a Lecture</h3>
-                <div class="input-group">
-                    <label>Select Class</label>
-                    <select id="classSelect" class="styled-input" style="width: 100%; padding: 0.8rem; background: var(--bg-color); color: white; border: 1px solid var(--border); border-radius: 8px;">
-                        <option value="" disabled selected>-- Select Class --</option>
-                        {% for c in classes %}
-                        <option value="{{ c }}">{{ c }}</option>
-                        {% endfor %}
-                    </select>
+                <h2 style="margin-top:0; border-bottom:1px solid var(--border); padding-bottom:1rem;">Target Audience</h2>
+                
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:1rem;">
+                    <div class="input-group">
+                        <label>Year</label>
+                        <select id="selYear">
+                            {% for y in years %}<option value="{{ y }}">{{ y }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Dept</label>
+                        <select id="selDept">
+                            {% for d in depts %}<option value="{{ d }}">{{ d }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Div</label>
+                        <select id="selDiv">
+                            {% for d in divs %}<option value="{{ d }}">{{ d }}</option>{% endfor %}
+                        </select>
+                    </div>
                 </div>
+
                 <div class="input-group">
-                    <label>Enter Subject Name</label>
-                    <input type="text" id="subjectInput" placeholder="e.g. Data Structures" style="width: 100%; padding: 0.8rem; background: var(--bg-color); color: white; border: 1px solid var(--border); border-radius: 8px;">
+                    <label>Lecture Subject</label>
+                    <input type="text" id="subjectInput" placeholder="e.g. Advanced AI" required>
                 </div>
-                <button id="startBtn" class="btn primary-btn" style="width: 100%; margin-top: 1rem;">Launch Scanner</button>
+                <button id="startBtn" class="btn primary-btn" style="height:50px; font-size:1.1rem; background: linear-gradient(90deg, #3b82f6, #8b5cf6);">🚀 Initialize Neural Networks</button>
             </div>
 
-            <div id="status" class="info" style="display:none;">Loading Deep Learning Models...</div>
+            <div id="status" class="card" style="display:none; width:100%; max-width:600px; text-align:center; color:var(--accent); font-weight:bold;">Loading Deep Learning Models...</div>
             
             <div class="video-container" id="videoContainer">
                 <video id="video" autoplay muted playsinline></video>
                 <canvas id="overlay"></canvas>
             </div>
 
-            <div class="controls" id="controlsDiv">
-                <button id="stopBtn" class="btn primary-btn" style="background-color: var(--error);" disabled>Stop & Sync Attendance</button>
-            </div>
+            <button id="stopBtn" class="btn primary-btn" style="background-color: var(--error); width:100%; max-width:600px; display:none; height:60px; font-size:1.2rem;">⏹ Stop Camera & Sync Data</button>
             
-            <div class="card" id="logCard" style="width:100%; max-width:600px; margin-top:1rem; display:none;">
-                <h3 style="margin-top:0;">Live Roster: <span id="displaySubject" style="color:var(--accent);"></span></h3>
-                <ul id="logList" style="list-style:none; padding:0; margin:0; max-height:200px; overflow-y:auto; color:var(--text-secondary)">
+            <div class="card" id="logCard" style="width:100%; max-width:600px; display:none;">
+                <h3 style="margin-top:0; border-bottom:1px solid var(--border); padding-bottom:1rem;">Live Roster: <span id="displaySubject" style="color:var(--accent);"></span></h3>
+                <ul id="logList" style="list-style:none; padding:0; margin:0; max-height:250px; overflow-y:auto; color:var(--text-secondary)">
                 </ul>
             </div>
         </main>
@@ -75,45 +79,44 @@
         const logList = document.getElementById('logList');
         const setupDiv = document.getElementById('setupDiv');
         const videoContainer = document.getElementById('videoContainer');
-        const controlsDiv = document.getElementById('controlsDiv');
         const logCard = document.getElementById('logCard');
         
         const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
         let faceMatcher = null;
         let running = true;
-        let attendanceLog = {}; // map of roll_no -> { name, status }
+        let attendanceLog = {}; 
         let knownStudents = [];
-        let currentClass = "";
-        let currentSubject = "";
+        let cYear, cDept, cDiv, cSubject;
 
         startBtn.addEventListener('click', () => {
-            currentClass = document.getElementById('classSelect').value;
-            currentSubject = document.getElementById('subjectInput').value.trim();
+            cYear = document.getElementById('selYear').value;
+            cDept = document.getElementById('selDept').value;
+            cDiv = document.getElementById('selDiv').value;
+            cSubject = document.getElementById('subjectInput').value.trim();
 
-            if(!currentClass || !currentSubject) {
-                alert("Please select a class and enter a subject.");
-                return;
+            if(!cYear || !cDept || !cDiv || !cSubject) {
+                alert("Please fill all target fields."); return;
             }
 
             setupDiv.style.display = 'none';
             statusDiv.style.display = 'block';
             videoContainer.style.display = 'block';
-            controlsDiv.style.display = 'flex';
+            stopBtn.style.display = 'block';
             logCard.style.display = 'block';
-            document.getElementById('displaySubject').innerText = currentSubject + " (" + currentClass + ")";
+            document.getElementById('displaySubject').innerText = `${cSubject} (${cYear}-${cDept}-${cDiv})`;
             
             init();
         });
 
         async function init() {
             try {
-                statusDiv.innerText = "Fetching " + currentClass + " rosters...";
-                const res = await fetch('/api/students/' + encodeURIComponent(currentClass));
+                statusDiv.innerText = `Fetching ${cYear} ${cDept} Div ${cDiv} rosters...`;
+                const res = await fetch(`/api/students/${cYear}/${cDept}/${cDiv}`);
                 knownStudents = await res.json();
                 
                 if(knownStudents.length === 0) {
-                    statusDiv.innerText = "No students enrolled in this class yet!";
-                    statusDiv.className = "error";
+                    statusDiv.innerText = "No students enrolled in this specific division yet!";
+                    statusDiv.style.color = "var(--error)";
                     return;
                 }
 
@@ -131,15 +134,12 @@
                 faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.5);
 
                 statusDiv.innerText = "Starting Camera...";
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: 'environment' } 
-                });
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
                 video.srcObject = stream;
 
                 video.onplay = () => {
-                    stopBtn.disabled = false;
-                    statusDiv.innerText = "Live Edge Inference Running";
-                    statusDiv.className = "success";
+                    statusDiv.innerText = "Live Edge Inference Running (Processing local feed...)";
+                    statusDiv.style.color = "var(--success)";
                     overlay.width = video.videoWidth;
                     overlay.height = video.videoHeight;
                     
@@ -153,7 +153,6 @@
 
             } catch(e) {
                 statusDiv.innerText = "Error: " + e.message;
-                statusDiv.className = "error";
             }
         }
 
@@ -198,7 +197,7 @@
             logList.innerHTML = '';
             Object.values(attendanceLog).forEach(entry => {
                 const color = entry.status === 'Present' ? 'var(--success)' : 'var(--error)';
-                logList.innerHTML += `<li style="padding:4px 0;"><span style="color:${color};font-weight:bold;">[${entry.status}]</span> ${entry.name}</li>`;
+                logList.innerHTML += `<li style="padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);"><span style="color:${color};font-weight:bold; background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:4px; margin-right:10px;">[${entry.status}]</span> ${entry.name}</li>`;
             });
         }
 
@@ -206,8 +205,7 @@
             running = false;
             video.srcObject.getTracks().forEach(track => track.stop());
             stopBtn.disabled = true;
-            statusDiv.innerText = "Saving & Syncing...";
-            statusDiv.className = "info";
+            statusDiv.innerText = "Saving & Syncing to Cloud...";
 
             const now = new Date();
             const timeStr = now.getHours().toString().padStart(2, '0') + ":" + 
@@ -219,24 +217,26 @@
                     roll_no: roll_no, 
                     date: attendanceLog[roll_no].date, 
                     time: timeStr,
-                    subject: currentSubject,
-                    class_name: currentClass,
+                    subject: cSubject,
+                    year: cYear,
+                    dept: cDept,
+                    div: cDiv,
                     status: attendanceLog[roll_no].status 
                 };
             });
 
-            let csvContent = "data:text/csv;charset=utf-8,roll_no,date,time,subject,class_name,status\n";
-            records.forEach(r => {
-                csvContent += `${r.roll_no},${r.date},${r.time},${r.subject},${r.class_name},${r.status}\n`;
-            });
+            // CSV Download
+            let csvContent = "data:text/csv;charset=utf-8,roll_no,date,time,subject,year,dept,div,status\n";
+            records.forEach(r => { csvContent += `${r.roll_no},${r.date},${r.time},${r.subject},${r.year},${r.dept},${r.div},${r.status}\n`; });
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `${currentClass}_${currentSubject}_${records[0].date}.csv`);
+            link.setAttribute("download", `${cYear}_${cDept}_${cDiv}_${cSubject}_${records[0].date}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
 
+            // API Sync
             try {
                 const response = await fetch('/api/sync_attendance', {
                     method: 'POST',
@@ -244,17 +244,12 @@
                     body: JSON.stringify(records)
                 });
                 const result = await response.json();
-                
                 if(result.status === 'success') {
-                    statusDiv.innerText = "Sync Complete! Data saved locally and to Advanced DB.";
-                    statusDiv.className = "success";
-                } else {
-                    statusDiv.innerText = "Synced failed: " + result.message;
-                    statusDiv.className = "error";
+                    statusDiv.innerText = "Sync Complete! Data saved locally and to Cloud DB.";
+                    statusDiv.style.color = "var(--success)";
                 }
             } catch(e) {
                 statusDiv.innerText = "Sync failed: " + e.message;
-                statusDiv.className = "error";
             }
         });
     </script>

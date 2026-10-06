@@ -3,117 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teacher Dashboard - Analytics</title>
+    <title>Teacher Admin - AI Hub</title>
     <link rel="stylesheet" href="/static/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
-        .stat-card { background: var(--card-bg); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border); text-align: center; }
-        .stat-card h3 { margin: 0; color: var(--text-secondary); font-size: 1rem; }
-        .stat-card p { margin: 0.5rem 0 0 0; font-size: 2.5rem; font-weight: bold; color: var(--accent); }
-        .chart-container { background: var(--card-bg); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 2rem; max-height: 400px; display:flex; justify-content:center;}
-        @media (max-width: 768px) { .stats-grid { grid-template-columns: 1fr; } }
-    </style>
+    <script>
+        async function updateStatus(id, currentStatus) {
+            const newStatus = currentStatus === 'Present' ? 'Absent' : 'Present';
+            const res = await fetch(`/api/attendance/${id}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({status: newStatus})
+            });
+            if(res.ok) location.reload();
+        }
+        async function deleteRecord(id) {
+            if(!confirm('Are you sure you want to delete this record?')) return;
+            const res = await fetch(`/api/attendance/${id}`, { method: 'DELETE' });
+            if(res.ok) location.reload();
+        }
+    </script>
 </head>
 <body>
-    <div class="container" style="max-width: 1000px;">
-        <header style="display:flex; justify-content:space-between; align-items:center;">
-            <div style="text-align:left;">
-                <h1 style="margin-bottom:0;">Admin Analytics Dashboard</h1>
-                <p style="margin-top:0.5rem;">Advanced Class & Subject Tracking</p>
+    <div class="container">
+        <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2rem;">
+            <div>
+                <h1 style="margin-bottom:0; font-size:2.2rem; background: -webkit-linear-gradient(#60a5fa, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Admin Control Center</h1>
+                <p style="margin-top:0.5rem; color:var(--text-secondary);">Manage Attendance & Edge Camera</p>
             </div>
             <div>
-                <a href="/teacher/logout" class="btn" style="background:#334155; color:white; width:auto; display:inline-block;">Logout</a>
+                <a href="/teacher/edge" class="btn primary-btn" style="width:auto; margin-right:1rem; box-shadow:0 0 15px rgba(59,130,246,0.5);">🎥 Launch AI Camera</a>
+                <a href="/teacher/logout" class="btn" style="background:#334155; color:white; width:auto;">Logout</a>
             </div>
         </header>
 
-        <main>
-            <div class="card" style="margin-bottom: 2rem; text-align:center; padding: 2rem; background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.1)); border-color: var(--accent);">
-                <h2 style="margin-top:0; color:var(--accent);">Launch New Lecture</h2>
-                <p style="color:var(--text-secondary); margin-bottom: 1.5rem;">Start the facial recognition scanner for a specific subject and class.</p>
-                <a href="/teacher/edge" class="btn primary-btn" style="width: auto; padding: 1rem 3rem; font-size: 1.2rem;">🎥 Open Scanner</a>
+        <!-- Hierarchy Filter Form -->
+        <div class="card" style="margin-bottom:2rem;">
+            <h3 style="margin-top:0; border-bottom:1px solid var(--border); padding-bottom:1rem; margin-bottom:1.5rem;">Data Filters</h3>
+            <form method="GET" action="/teacher/dashboard" style="display:grid; grid-template-columns: 1fr 1fr 1fr auto; gap:1rem; align-items:end;">
+                <div class="input-group" style="margin:0;">
+                    <label>Year</label>
+                    <select name="year">
+                        <option value="">All Years</option>
+                        {% for y in years %}
+                        <option value="{{ y }}" {% if selected_year == y %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="input-group" style="margin:0;">
+                    <label>Department</label>
+                    <select name="dept">
+                        <option value="">All Departments</option>
+                        {% for d in depts %}
+                        <option value="{{ d }}" {% if selected_dept == d %}selected{% endif %}>{{ d }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="input-group" style="margin:0;">
+                    <label>Division</label>
+                    <select name="div">
+                        <option value="">All Divisions</option>
+                        {% for d in divs %}
+                        <option value="{{ d }}" {% if selected_div == d %}selected{% endif %}>{{ d }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn" style="background:var(--accent); color:white; height: 50px;">Apply Filters</button>
+            </form>
+        </div>
+
+        <main class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:1rem; margin-bottom:1rem;">
+                <h2 style="margin:0;">Attendance Ledger (CRUD)</h2>
+                <span class="badge" style="background:#334155; color:white;">{{ records|length }} Records Found</span>
             </div>
 
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <h3>Total Students Enrolled</h3>
-                    <p>{{ total_students }}</p>
-                </div>
-                <div class="stat-card">
-                    <h3>Total Attendance Records</h3>
-                    <p>{{ total_records }}</p>
-                </div>
-                <div class="stat-card">
-                    <h3>Lectures Conducted Today</h3>
-                    <p>{{ classes_today }}</p>
-                </div>
-            </div>
-
-            <div class="chart-container">
-                <canvas id="subjectChart"></canvas>
-            </div>
-
-            <section class="records-section card">
-                <h2 style="margin-top:0;">Advanced Attendance Ledger</h2>
+            <div style="overflow-x:auto;">
                 <table class="styled-table">
                     <thead>
                         <tr>
-                            <th>Time</th>
-                            <th>Class</th>
+                            <th>ID</th>
+                            <th>Time / Date</th>
+                            <th>Target</th>
                             <th>Subject</th>
-                            <th>Roll Number</th>
                             <th>Status</th>
+                            <th>Admin Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for record in records %}
+                        {% for r in records %}
                         <tr>
-                            <td>{{ record.timestamp.strftime('%b %d, %H:%M') if record.timestamp else record.date }}</td>
-                            <td><span style="background:#334155; padding:2px 8px; border-radius:12px; font-size:0.8rem;">{{ record.class_name }}</span></td>
-                            <td>{{ record.subject }}</td>
-                            <td>{{ record.roll_no }}</td>
+                            <td style="color:var(--text-secondary);">#{{ r.id }}</td>
+                            <td>{{ r.timestamp.strftime('%b %d, %H:%M') if r.timestamp else r.date }}</td>
                             <td>
-                                <span class="badge {{ 'present' if record.status == 'Present' else 'absent' }}">
-                                    {{ record.status }}
+                                <div><strong>{{ r.roll_no }}</strong></div>
+                                <div style="font-size:0.8rem; color:var(--text-secondary);">{{ r.year }} • {{ r.dept }} • Div {{ r.div }}</div>
+                            </td>
+                            <td>{{ r.subject }}</td>
+                            <td>
+                                <span class="badge {{ 'present' if r.status == 'Present' else 'absent' }}">
+                                    {{ r.status }}
                                 </span>
+                            </td>
+                            <td>
+                                <button onclick="updateStatus({{ r.id }}, '{{ r.status }}')" class="action-btn edit-btn">Toggle Status</button>
+                                <button onclick="deleteRecord({{ r.id }})" class="action-btn delete-btn">Delete</button>
                             </td>
                         </tr>
                         {% endfor %}
+                        {% if not records %}
+                        <tr><td colspan="6" style="text-align:center; padding:2rem; color:var(--text-secondary);">No records match this filter.</td></tr>
+                        {% endif %}
                     </tbody>
                 </table>
-            </section>
+            </div>
         </main>
     </div>
-
-    <script>
-        const ctx = document.getElementById('subjectChart').getContext('2d');
-        const chartLabels = JSON.parse('{{ chart_labels | safe }}');
-        const chartData = JSON.parse('{{ chart_data | safe }}');
-
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: chartLabels,
-                datasets: [{
-                    label: 'Total Scans per Subject',
-                    data: chartData,
-                    backgroundColor: 'rgba(59, 130, 246, 0.6)',
-                    borderColor: 'rgba(59, 130, 246, 1)',
-                    borderWidth: 1,
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { labels: { color: '#f8fafc' } }
-                },
-                scales: {
-                    y: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
-                    x: { ticks: { color: '#94a3b8' }, grid: { display: false } }
-                }
-            }
-        });
-    </script>
 </body>
 </html>
