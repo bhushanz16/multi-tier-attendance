@@ -1,6 +1,8 @@
 import json
+import csv
+import io
 from fastapi import FastAPI, Depends, Request, Response, Form, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import create_engine
@@ -11,7 +13,7 @@ from typing import List
 from sqlalchemy.sql import func
 from sqlalchemy import desc
 
-from models import Base, Student, Attendance, Teacher, Subject
+from models import Base, Student, Attendance, Teacher, Subject, AuditLog
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -279,6 +281,7 @@ async def enroll_face_api(data: EnrollData, request: Request, db: Session = Depe
     
     student = db.query(Student).filter(Student.roll_no == roll_no).first()
     student.face_encoding = json.dumps(data.encoding)
+    db.add(AuditLog(actor=roll_no, action_type="FACE_UPDATE", target_student=roll_no, details="Uploaded new biometric vector"))
     db.commit()
     return JSONResponse({"status": "success"})
 
@@ -355,3 +358,141 @@ async def delete_attendance(id: int, request: Request, db: Session = Depends(get
         db.commit()
         return {"status": "success"}
     return {"status": "error"}
+
+# ==================== ADVANCED REPORTS & AUDITING ====================
+
+@app.get("/teacher/database", response_class=HTMLResponse)
+async def teacher_database(request: Request, db: Session = Depends(get_db)):
+    t_user = get_teacher_user(request)
+    if not t_user: return RedirectResponse(url="/teacher/login")
+    students = db.query(Student).all()
+    return templates.TemplateResponse(request=request, name="teacher_database.html", context={"t_user": t_user, "students": students})
+
+@app.post("/teacher/database/update")
+async def teacher_database_update(
+    request: Request, id: int = Form(...), roll_no: str = Form(...), name: str = Form(...), 
+    semester: str = Form(...), dept: str = Form(...), div: str = Form(...), db: Session = Depends(get_db)
+):
+    t_user = get_teacher_user(request)
+    if not t_user: return RedirectResponse(url="/teacher/login")
+    
+    student = db.query(Student).filter(Student.id == id).first()
+    if student:
+        old_data = f"{student.roll_no}, {student.name}, {student.semester}, {student.dept}, {student.div}"
+        student.roll_no = roll_no
+        student.name = name
+        student.semester = semester
+        student.dept = dept
+        student.div = div
+        new_data = f"{roll_no}, {name}, {semester}, {dept}, {div}"
+        db.add(AuditLog(actor=t_user, action_type="MANUAL_DB_EDIT", target_student=roll_no, details=f"Changed from [{old_data}] to [{new_data}]"))
+        db.commit()
+    return RedirectResponse(url="/teacher/database", status_code=302)
+
+@app.get("/teacher/audit", response_class=HTMLResponse)
+async def teacher_audit_logs(request: Request, db: Session = Depends(get_db)):
+    t_user = get_teacher_user(request)
+    if not t_user: return RedirectResponse(url="/teacher/login")
+    logs = db.query(AuditLog).order_by(desc(AuditLog.timestamp)).all()
+    return templates.TemplateResponse(request=request, name="teacher_audit.html", context={"t_user": t_user, "logs": logs})
+
+@app.get("/teacher/subjects", response_class=HTMLResponse)
+async def teacher_subjects_page(request: Request, db: Session = Depends(get_db)):
+    t_user = get_teacher_user(request)
+    if not t_user: return RedirectResponse(url="/teacher/login")
+    subjects = db.query(Subject).filter(Subject.teacher_username == t_user).all()
+    semesters = [y[0] for y in db.query(Student.semester).distinct().all() if y[0]]
+    if not semesters: semesters = ["Semester 1", "Semester 2", "Semester 3", "Semester 4"]
+    return templates.TemplateResponse(request=request, name="teacher_subjects.html", context={"t_user": t_user, "subjects": subjects, "semesters": semesters})
+
+@app.get("/teacher/reports", response_class=HTMLResponse)
+async def teacher_reports_page(request: Request, db: Session = Depends(get_db)):
+    t_user = get_teacher_user(request)
+    if not t_user: return RedirectResponse(url="/teacher/login")
+    students = db.query(Student).all()
+    return templates.TemplateResponse(request=request, name="teacher_reports.html", context={"t_user": t_user, "students": students})
+
+@app.get("/api/reports/overall")
+async def generate_overall_csv(request: Request, db: Session = Depends(get_db)):
+    t_user = get_teacher_user(request)
+    if not t_user: return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Roll No", "Name", "Semester", "Dept", "Div", "Total Lectures", "Attended", "Percentage"])
+    
+    students = db.query(Student).all()
+    for s in students:
+        total = db.query(Attendance.timestamp).filter(
+            Attendance.teacher_username == t_user, Attendance.semester == s.semester, Attendance.dept == s.dept, Attendance.div == s.div
+        ).distinct().count()
+        attended = db.query(Attendance).filter(
+            Attendance.teacher_username == t_user, Attendance.roll_no == s.roll_no, Attendance.status == 'Present'
+        ).count()
+        if total == 0: total = 1
+        pct = round((attended/total)*100)
+        writer.writerow([s.roll_no, s.name, s.semester, s.dept, s.div, total, attended, f"{pct}%"])
+    
+    output.seek(0)
+    return StreamingResponse(iter([output.getvalue()]), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=overall_report.csv"})
+
+@app.get("/api/reports/blacklist")
+async def generate_blacklist_csv(request: Request, db: Session = Depends(get_db)):
+    t_user = get_teacher_user(request)
+    if not t_user: return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Roll No", "Name", "Semester", "Dept", "Div", "Total Lectures", "Attended", "Percentage", "Status"])
+    
+    students = db.query(Student).all()
+    for s in students:
+        total = db.query(Attendance.timestamp).filter(
+            Attendance.teacher_username == t_user, Attendance.semester == s.semester, Attendance.dept == s.dept, Attendance.div == s.div
+        ).distinct().count()
+        attended = db.query(Attendance).filter(
+            Attendance.teacher_username == t_user, Attendance.roll_no == s.roll_no, Attendance.status == 'Present'
+        ).count()
+        if total == 0: total = 1
+        pct = round((attended/total)*100)
+        if pct < 75:
+            writer.writerow([s.roll_no, s.name, s.semester, s.dept, s.div, total, attended, f"{pct}%", "DEFAULTER"])
+    
+    output.seek(0)
+    return StreamingResponse(iter([output.getvalue()]), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=blacklist.csv"})
+
+@app.get("/api/reports/student/{roll_no}")
+async def generate_student_csv(roll_no: str, request: Request, db: Session = Depends(get_db)):
+    t_user = get_teacher_user(request)
+    if not t_user: return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    
+    student = db.query(Student).filter(Student.roll_no == roll_no).first()
+    if not student: return JSONResponse({"error": "Not Found"}, status_code=404)
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Roll No", "Name", "Subject", "Date", "Time", "Status"])
+    
+    records = db.query(Attendance).filter(Attendance.teacher_username == t_user, Attendance.roll_no == roll_no).all()
+    for r in records:
+        writer.writerow([r.roll_no, student.name, r.subject, r.date, r.timestamp.strftime("%H:%M:%S") if r.timestamp else "", r.status])
+    
+    output.seek(0)
+    return StreamingResponse(iter([output.getvalue()]), media_type="text/csv", headers={"Content-Disposition": f"attachment; filename=student_{roll_no}_report.csv"})
+
+@app.get("/student/report")
+async def student_self_report(request: Request, db: Session = Depends(get_db)):
+    roll_no = get_student_user(request)
+    if not roll_no: return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    
+    student = db.query(Student).filter(Student.roll_no == roll_no).first()
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Roll No", "Name", "Subject", "Date", "Time", "Status", "Teacher"])
+    
+    records = db.query(Attendance).filter(Attendance.roll_no == roll_no).all()
+    for r in records:
+        writer.writerow([r.roll_no, student.name, r.subject, r.date, r.timestamp.strftime("%H:%M:%S") if r.timestamp else "", r.status, r.teacher_username])
+    
+    output.seek(0)
+    return StreamingResponse(iter([output.getvalue()]), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=my_attendance_report.csv"})
