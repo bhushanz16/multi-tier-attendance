@@ -129,7 +129,8 @@ async def teacher_dashboard(request: Request, semester: str = None, dept: str = 
 
 @app.get("/teacher/edge", response_class=HTMLResponse)
 async def teacher_edge_page(request: Request, db: Session = Depends(get_db)):
-    if not get_teacher_user(request):
+    t_user = get_teacher_user(request)
+    if not t_user:
         return RedirectResponse(url="/teacher/login")
     
     semesters = [y[0] for y in db.query(Student.semester).distinct().all() if y[0]]

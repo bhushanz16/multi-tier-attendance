@@ -241,7 +241,10 @@
                 body: JSON.stringify({ encoding: Array.from(detection.descriptor) })
             });
             const result = await response.json();
-            if(result.status === 'success') location.reload();
+            if(result.status === 'success') {
+                alert("Face successfully captured and registered!");
+                location.reload();
+            }
             else statusDiv.innerText = "Error saving registration.";
         });
         

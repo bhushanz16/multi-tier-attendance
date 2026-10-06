@@ -379,6 +379,7 @@
                 const result = await response.json();
                 if(result.status === 'success') {
                     statusDiv.innerText = "Success: Attendance saved. You can return to Dashboard.";
+                    alert("Attendance successfully saved to the cloud!");
                     addTerminalLog("SAVE SUCCESSFUL.", "INFO");
                 }
             } catch(e) {
