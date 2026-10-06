@@ -27,9 +27,9 @@
                 
                 <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:1rem;">
                     <div class="input-group">
-                        <label>Year</label>
-                        <select id="selYear">
-                            {% for y in years %}<option value="{{ y }}">{{ y }}</option>{% endfor %}
+                        <label>Semester</label>
+                        <select id="selSemester">
+                            {% for y in semesters %}<option value="{{ y }}">{{ y }}</option>{% endfor %}
                         </select>
                     </div>
                     <div class="input-group">
@@ -86,15 +86,15 @@
         let running = true;
         let attendanceLog = {}; 
         let knownStudents = [];
-        let cYear, cDept, cDiv, cSubject;
+        let cSemester, cDept, cDiv, cSubject;
 
         startBtn.addEventListener('click', () => {
-            cYear = document.getElementById('selYear').value;
+            cSemester = document.getElementById('selSemester').value;
             cDept = document.getElementById('selDept').value;
             cDiv = document.getElementById('selDiv').value;
             cSubject = document.getElementById('subjectInput').value.trim();
 
-            if(!cYear || !cDept || !cDiv || !cSubject) {
+            if(!cSemester || !cDept || !cDiv || !cSubject) {
                 alert("Please fill all target fields."); return;
             }
 
@@ -103,15 +103,15 @@
             videoContainer.style.display = 'block';
             stopBtn.style.display = 'block';
             logCard.style.display = 'block';
-            document.getElementById('displaySubject').innerText = `${cSubject} (${cYear}-${cDept}-${cDiv})`;
+            document.getElementById('displaySubject').innerText = `${cSubject} (${cSemester}-${cDept}-${cDiv})`;
             
             init();
         });
 
         async function init() {
             try {
-                statusDiv.innerText = `Fetching ${cYear} ${cDept} Div ${cDiv} rosters...`;
-                const res = await fetch(`/api/students/${cYear}/${cDept}/${cDiv}`);
+                statusDiv.innerText = `Fetching ${cSemester} ${cDept} Div ${cDiv} rosters...`;
+                const res = await fetch(`/api/students/${cSemester}/${cDept}/${cDiv}`);
                 knownStudents = await res.json();
                 
                 if(knownStudents.length === 0) {
@@ -218,7 +218,7 @@
                     date: attendanceLog[roll_no].date, 
                     time: timeStr,
                     subject: cSubject,
-                    year: cYear,
+                    semester: cSemester,
                     dept: cDept,
                     div: cDiv,
                     status: attendanceLog[roll_no].status 
@@ -226,12 +226,12 @@
             });
 
             // CSV Download
-            let csvContent = "data:text/csv;charset=utf-8,roll_no,date,time,subject,year,dept,div,status\n";
-            records.forEach(r => { csvContent += `${r.roll_no},${r.date},${r.time},${r.subject},${r.year},${r.dept},${r.div},${r.status}\n`; });
+            let csvContent = "data:text/csv;charset=utf-8,roll_no,date,time,subject,semester,dept,div,status\n";
+            records.forEach(r => { csvContent += `${r.roll_no},${r.date},${r.time},${r.subject},${r.semester},${r.dept},${r.div},${r.status}\n`; });
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `${cYear}_${cDept}_${cDiv}_${cSubject}_${records[0].date}.csv`);
+            link.setAttribute("download", `${cSemester}_${cDept}_${cDiv}_${cSubject}_${records[0].date}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);

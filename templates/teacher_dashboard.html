@@ -40,11 +40,11 @@
             <h3 style="margin-top:0; border-bottom:1px solid var(--border); padding-bottom:1rem; margin-bottom:1.5rem;">Data Filters</h3>
             <form method="GET" action="/teacher/dashboard" style="display:grid; grid-template-columns: 1fr 1fr 1fr auto; gap:1rem; align-items:end;">
                 <div class="input-group" style="margin:0;">
-                    <label>Year</label>
-                    <select name="year">
-                        <option value="">All Years</option>
-                        {% for y in years %}
-                        <option value="{{ y }}" {% if selected_year == y %}selected{% endif %}>{{ y }}</option>
+                    <label>Semester</label>
+                    <select name="semester">
+                        <option value="">All Semesters</option>
+                        {% for y in semesters %}
+                        <option value="{{ y }}" {% if selected_semester == y %}selected{% endif %}>{{ y }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -95,7 +95,7 @@
                             <td>{{ r.timestamp.strftime('%b %d, %H:%M') if r.timestamp else r.date }}</td>
                             <td>
                                 <div><strong>{{ r.roll_no }}</strong></div>
-                                <div style="font-size:0.8rem; color:var(--text-secondary);">{{ r.year }} • {{ r.dept }} • Div {{ r.div }}</div>
+                                <div style="font-size:0.8rem; color:var(--text-secondary);">{{ r.semester }} • {{ r.dept }} • Div {{ r.div }}</div>
                             </td>
                             <td>{{ r.subject }}</td>
                             <td>

@@ -15,7 +15,7 @@ class Student(Base):
     roll_no = Column(String, unique=True, index=True)
     name = Column(String)
     password = Column(String)
-    year = Column(String) # e.g., '1st', '2nd', '3rd', '4th'
+    semester = Column(String) # e.g., 'Semester 1', 'Semester 2', etc.
     dept = Column(String) # e.g., 'Computer', 'Mechanical'
     div = Column(String)  # e.g., 'A', 'B'
     face_encoding = Column(String, nullable=True)
@@ -27,7 +27,8 @@ class Attendance(Base):
     date = Column(Date, index=True)
     timestamp = Column(DateTime)
     subject = Column(String, index=True)
-    year = Column(String, index=True)
+    semester = Column(String, index=True)
     dept = Column(String, index=True)
     div = Column(String, index=True)
     status = Column(String)
+    teacher_username = Column(String, index=True) # Links attendance to the specific teacher
