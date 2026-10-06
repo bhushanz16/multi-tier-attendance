@@ -173,6 +173,36 @@ async def student_dashboard(request: Request, db: Session = Depends(get_db)):
             "color": color
         })
 
+    # Calculate Attendance % per subject
+    subjects = db.query(Attendance.subject).filter(
+        Attendance.year == student.year, Attendance.dept == student.dept, Attendance.div == student.div
+    ).distinct().all()
+    
+    analytics = []
+    chart_labels = []
+    chart_data = []
+
+    for s in subjects:
+        subj = s[0]
+        # Count distinct timestamps for this subject (Total Lectures)
+        total_lectures = db.query(Attendance.timestamp).filter(
+            Attendance.subject == subj, Attendance.year == student.year, 
+            Attendance.dept == student.dept, Attendance.div == student.div
+        ).distinct().count()
+        
+        if total_lectures == 0: total_lectures = 1
+        
+        # Count student's presence
+        attended = db.query(Attendance).filter(
+            Attendance.roll_no == roll_no, Attendance.subject == subj, Attendance.status == 'Present'
+        ).count()
+        
+        percentage = min(100, round((attended / total_lectures) * 100))
+        
+        analytics.append({"subject": subj, "attended": attended, "total": total_lectures, "percentage": percentage})
+        chart_labels.append(subj)
+        chart_data.append(percentage)
+
     has_face = student.face_encoding is not None
     
     return templates.TemplateResponse(
@@ -181,7 +211,10 @@ async def student_dashboard(request: Request, db: Session = Depends(get_db)):
         context={
             "student": student, 
             "has_face": has_face,
-            "calendar_events": json.dumps(calendar_events)
+            "calendar_events": json.dumps(calendar_events),
+            "analytics": analytics,
+            "chart_labels": json.dumps(chart_labels),
+            "chart_data": json.dumps(chart_data)
         }
     )
 

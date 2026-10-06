@@ -24,7 +24,7 @@
         </header>
 
         <main class="layout">
-            <!-- Sidebar: Face Enrollment -->
+            <!-- Sidebar: Face Enrollment & Analytics -->
             <div style="display:flex; flex-direction:column; gap:1.5rem;">
                 <div class="card" style="text-align:center;">
                     <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" width="80" style="margin-bottom:1rem; opacity:0.8;">
@@ -47,6 +47,34 @@
 
                     <button id="captureBtn" class="btn primary-btn" style="margin-top:1rem;" disabled>Loading Scanner...</button>
                     <div id="status" style="margin-top:1rem; font-size:0.9rem; color:var(--text-secondary);"></div>
+                </div>
+
+                <div class="card">
+                    <h2 style="margin-top:0; text-align:center;">Subject Analytics</h2>
+                    <div style="display:flex; justify-content:center; max-height:200px; margin-bottom:1rem;">
+                        <canvas id="subjectChart"></canvas>
+                    </div>
+                    <table class="styled-table" style="font-size:0.85rem;">
+                        <thead>
+                            <tr>
+                                <th>Subject</th>
+                                <th>Attended / Total</th>
+                                <th>%</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for a in analytics %}
+                            <tr>
+                                <td>{{ a.subject }}</td>
+                                <td>{{ a.attended }} / {{ a.total }}</td>
+                                <td><span style="color: {{ 'var(--success)' if a.percentage >= 75 else 'var(--error)' }}; font-weight:bold;">{{ a.percentage }}%</span></td>
+                            </tr>
+                            {% endfor %}
+                            {% if not analytics %}
+                            <tr><td colspan="3" style="text-align:center;">No data yet.</td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -77,6 +105,25 @@
                 }
             });
             calendar.render();
+
+            // Render Chart
+            const ctx = document.getElementById('subjectChart').getContext('2d');
+            const chartLabels = JSON.parse('{{ chart_labels | safe }}');
+            const chartData = JSON.parse('{{ chart_data | safe }}');
+            if(chartLabels.length > 0) {
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: chartLabels,
+                        datasets: [{
+                            data: chartData,
+                            backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                });
+            }
         });
 
         // Camera Logic
