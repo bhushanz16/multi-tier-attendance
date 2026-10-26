@@ -127,19 +127,23 @@
                     </div>
                 </div>
 
-                <!-- 3 ATTENDANCE MODE TABS -->
-                <div class="flex items-center gap-2 bg-surface-container-lowest p-1 rounded-lg border border-surface-container-highest">
-                    <button id="tabFace" class="tab-btn active flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-mono-code-sm border border-transparent transition-all">
+                <!-- 4 ATTENDANCE MODE TABS -->
+                <div class="flex items-center gap-1.5 bg-surface-container-lowest p-1 rounded-lg border border-surface-container-highest overflow-x-auto">
+                    <button id="tabFace" class="tab-btn active flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-mono-code-sm border border-transparent transition-all whitespace-nowrap">
                         <span class="material-symbols-outlined text-base">face</span>
-                        <span>1. AI Face Scanner</span>
+                        <span>1. AI Face</span>
                     </button>
-                    <button id="tabBarcode" class="tab-btn flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-mono-code-sm border border-transparent transition-all">
+                    <button id="tabBarcode" class="tab-btn flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-mono-code-sm border border-transparent transition-all whitespace-nowrap">
                         <span class="material-symbols-outlined text-base">qr_code_scanner</span>
-                        <span>2. ID Barcode / QR</span>
+                        <span>2. ID Barcode/QR</span>
                     </button>
-                    <button id="tabManual" class="tab-btn flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-mono-code-sm border border-transparent transition-all">
+                    <button id="tabDual" class="tab-btn flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-mono-code-sm border border-transparent transition-all whitespace-nowrap">
+                        <span class="material-symbols-outlined text-base text-tertiary-fixed">verified_user</span>
+                        <span>3. Face + ID (Dual 2FA)</span>
+                    </button>
+                    <button id="tabManual" class="tab-btn flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-mono-code-sm border border-transparent transition-all whitespace-nowrap">
                         <span class="material-symbols-outlined text-base">checklist</span>
-                        <span>3. Manual Roster</span>
+                        <span>4. Manual Roster</span>
                     </button>
                 </div>
             </div>
@@ -245,7 +249,84 @@
                 </div>
             </div>
 
-            <!-- TAB CONTENT 3: MANUAL ATTENDANCE ROSTER -->
+            <!-- TAB CONTENT 3: FACE DETECTION + PHYSICAL ID CARD (DUAL 2FA) -->
+            <div id="viewDual" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-5">
+                <div class="lg:col-span-2 space-y-3">
+                    <div class="video-container" id="dualVideoContainer">
+                        <div class="hud-corner hud-tl"></div>
+                        <div class="hud-corner hud-tr"></div>
+                        <div class="hud-corner hud-bl"></div>
+                        <div class="hud-corner hud-br"></div>
+                        <div class="absolute top-3 left-3 z-10 flex items-center gap-2 bg-surface-container-highest/80 backdrop-blur-md border border-surface-variant rounded-md px-2.5 py-1 text-xs font-mono-code-sm text-tertiary-fixed">
+                            <span class="w-2 h-2 rounded-full bg-tertiary-container animate-pulse"></span>
+                            DUAL MULTI-FACTOR 2FA VERIFICATION
+                        </div>
+                        <video id="dualVideo" autoplay muted playsinline></video>
+                        <canvas id="dualOverlay"></canvas>
+                    </div>
+
+                    <!-- Dual 2FA Instruction Bar -->
+                    <div class="bg-surface-container-low p-3.5 rounded-xl border border-surface-container-highest flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-mono-code-sm">
+                        <div class="flex items-center gap-2 text-outline">
+                            <span class="material-symbols-outlined text-tertiary-fixed text-base">shield</span>
+                            <span>Anti-Proxy Security: Student must verify physical ID card AND match enrolled face</span>
+                        </div>
+                        <button id="dualResetBtn" class="bg-surface-container hover:bg-surface-container-high px-3 py-1 rounded text-outline hover:text-white transition-colors">
+                            Clear / Next Student
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right Column: Verification Panel -->
+                <div class="space-y-4">
+                    <!-- Physical Card Input Box -->
+                    <div class="bg-surface-container-low rounded-xl p-5 border border-surface-container-highest space-y-3">
+                        <div class="flex items-center justify-between border-b border-surface-container-highest pb-2.5">
+                            <span class="text-xs font-headline-sm text-tertiary-fixed font-bold uppercase">Physical ID Card Reader</span>
+                            <span class="material-symbols-outlined text-tertiary-fixed text-xl">credit_card</span>
+                        </div>
+                        <p class="text-[11px] font-mono-code-sm text-outline">
+                            Scan barcode/QR on physical card or enter Student ID / Roll No:
+                        </p>
+                        <div class="flex gap-2">
+                            <input type="text" id="dualCardInput" placeholder="Scan or enter Student ID (PRN) / Roll..." class="flex-1 bg-surface-container text-on-surface border border-surface-container-highest rounded-lg px-3 py-2 text-xs font-mono-code-sm focus:border-tertiary-container focus:outline-none">
+                            <button id="dualCardSubmitBtn" class="bg-tertiary-container text-black font-bold px-3 py-2 rounded-lg text-xs font-mono-code-sm hover:opacity-90 transition-all">
+                                Verify Card
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 2FA Checkpoint Checklist -->
+                    <div class="bg-surface-container-lowest rounded-xl p-5 border border-surface-container-highest space-y-3">
+                        <span class="text-xs font-mono-code-sm text-outline uppercase tracking-wider block border-b border-surface-container-highest/40 pb-2">Dual 2FA Checkpoints</span>
+                        
+                        <!-- Factor 1: Physical ID Card -->
+                        <div class="flex items-start gap-3 p-3 rounded-lg bg-surface-container-low border border-surface-container-highest">
+                            <span id="step1Icon" class="material-symbols-outlined text-outline text-xl shrink-0">radio_button_unchecked</span>
+                            <div class="flex-1">
+                                <div class="font-bold text-xs text-on-surface">Factor 1: Physical ID Card</div>
+                                <div id="step1Desc" class="text-[11px] text-outline font-mono-code-sm mt-0.5">Awaiting card scan or input...</div>
+                            </div>
+                        </div>
+
+                        <!-- Factor 2: Live Face Biometric -->
+                        <div class="flex items-start gap-3 p-3 rounded-lg bg-surface-container-low border border-surface-container-highest">
+                            <span id="step2Icon" class="material-symbols-outlined text-outline text-xl shrink-0">radio_button_unchecked</span>
+                            <div class="flex-1">
+                                <div class="font-bold text-xs text-on-surface">Factor 2: Live Face Biometric</div>
+                                <div id="step2Desc" class="text-[11px] text-outline font-mono-code-sm mt-0.5">Requires matched face in front of lens</div>
+                            </div>
+                        </div>
+
+                        <!-- Result Banner -->
+                        <div id="dualResultBanner" class="p-3 rounded-lg bg-surface-container border border-surface-container-highest text-center text-xs font-mono-code-sm text-outline">
+                            Waiting for both factors to confirm attendance.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB CONTENT 4: MANUAL ATTENDANCE ROSTER -->
             <div id="viewManual" class="hidden space-y-4">
                 <div class="bg-surface-container-low rounded-xl p-5 border border-surface-container-highest space-y-4">
                     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-surface-container-highest pb-3">
@@ -364,9 +445,11 @@
         // Tabs
         const tabFace = document.getElementById('tabFace');
         const tabBarcode = document.getElementById('tabBarcode');
+        const tabDual = document.getElementById('tabDual');
         const tabManual = document.getElementById('tabManual');
         const viewFace = document.getElementById('viewFace');
         const viewBarcode = document.getElementById('viewBarcode');
+        const viewDual = document.getElementById('viewDual');
         const viewManual = document.getElementById('viewManual');
 
         // Video / Face Recognition Elements
@@ -376,10 +459,24 @@
         const thresholdSlider = document.getElementById('thresholdSlider');
         const thresholdVal = document.getElementById('thresholdVal');
 
-        // Barcode / Manual Elements
+        // Barcode Elements
         const manualBarcodeInput = document.getElementById('manualBarcodeInput');
         const submitBarcodeBtn = document.getElementById('submitBarcodeBtn');
         const lastScannedBox = document.getElementById('lastScannedBox');
+
+        // Dual 2FA Elements
+        const dualVideo = document.getElementById('dualVideo');
+        const dualOverlay = document.getElementById('dualOverlay');
+        const dualCardInput = document.getElementById('dualCardInput');
+        const dualCardSubmitBtn = document.getElementById('dualCardSubmitBtn');
+        const dualResetBtn = document.getElementById('dualResetBtn');
+        const step1Icon = document.getElementById('step1Icon');
+        const step1Desc = document.getElementById('step1Desc');
+        const step2Icon = document.getElementById('step2Icon');
+        const step2Desc = document.getElementById('step2Desc');
+        const dualResultBanner = document.getElementById('dualResultBanner');
+
+        // Roster / Manual Elements
         const rosterTableBody = document.getElementById('rosterTableBody');
         const rosterSearch = document.getElementById('rosterSearch');
         const markAllPresentBtn = document.getElementById('markAllPresentBtn');
@@ -794,31 +891,53 @@
             }
         }
 
+        // Helper: Find student by Student ID (PRN), Roll No, or Name
+        function findStudentByCode(rawCode) {
+            if(!rawCode) return null;
+            const q = rawCode.trim().toLowerCase();
+            // 1. Direct match on student_id (Primary Institutional ID)
+            let match = allStudents.find(s => s.student_id && s.student_id.toLowerCase() === q);
+            if(match) return match;
+            // 2. Direct match on roll_no
+            match = allStudents.find(s => s.roll_no && s.roll_no.toLowerCase() === q);
+            if(match) return match;
+            // 3. Substring match on student_id or roll_no (e.g. barcode containing "PRN101" or "STU202401")
+            match = allStudents.find(s => (s.student_id && q.includes(s.student_id.toLowerCase())) || (s.roll_no && q.includes(s.roll_no.toLowerCase())));
+            if(match) return match;
+            // 4. Substring in code
+            match = allStudents.find(s => (s.student_id && s.student_id.toLowerCase().includes(q)) || (s.roll_no && s.roll_no.toLowerCase().includes(q)));
+            if(match) return match;
+            // 5. Name match
+            match = allStudents.find(s => s.name && s.name.toLowerCase().includes(q));
+            return match;
+        }
+
         let lastScannedTime = 0;
         function handleBarcodeDetected(rawCode) {
             const now = Date.now();
             if(now - lastScannedTime < 1800) return; // Debounce 1.8 seconds
             lastScannedTime = now;
 
-            // Find matching student by Roll No or Name
-            const student = allStudents.find(s => s.roll_no.toLowerCase() === rawCode.toLowerCase() || rawCode.toLowerCase().includes(s.roll_no.toLowerCase()));
+            // Find matching student by Student ID (PRN) or Roll No
+            const student = findStudentByCode(rawCode);
 
             if(student) {
-                markStudent(student.roll_no, 'Present', 'Barcode');
+                markStudent(student.roll_no, 'Present', 'Card');
                 lastScannedBox.innerHTML = `
                     <div class="flex items-center gap-2 text-tertiary-fixed font-bold text-sm mb-1">
                         <span class="material-symbols-outlined">check_circle</span>
-                        <span>VERIFIED & MARKED</span>
+                        <span>PHYSICAL CARD VERIFIED & MARKED</span>
                     </div>
                     <div class="text-on-surface font-headline-sm font-bold text-base">${student.name}</div>
+                    <div class="text-tertiary-fixed text-xs font-mono-code-sm font-bold">Student ID: ${student.student_id || student.roll_no}</div>
                     <div class="text-outline text-xs font-mono-code-sm">Roll No: ${student.roll_no}</div>
                     <div class="mt-2 text-[11px] bg-tertiary-container/10 text-tertiary-fixed px-2 py-0.5 rounded border border-tertiary-container/30">
-                        Method: Barcode / QR Card
+                        Method: Physical ID Card / Barcode
                     </div>
                 `;
             } else {
                 playChime(false);
-                addLog(`Unknown barcode scanned: "${rawCode}" (Not in current class)`, "ERR");
+                addLog(`Unknown barcode/ID scanned: "${rawCode}" (Not in current class)`, "ERR");
                 lastScannedBox.innerHTML = `
                     <div class="flex items-center gap-2 text-error font-bold text-sm mb-1">
                         <span class="material-symbols-outlined">error</span>
@@ -927,6 +1046,229 @@
             addLog("Teacher reset all students to Absent.", "MANUAL");
         });
 
+        // ==================== MODE 3: FACE + ID CARD DUAL 2FA ====================
+        let dualDetectionRunning = false;
+        let dualStream = null;
+        let pendingDualStudent = null;
+        let dualCooldown = false;
+
+        async function startDualMode() {
+            statusText.innerText = "Dual 2FA Active: Present Physical ID Card and look at camera.";
+            statusSpinner.style.display = 'inline-block';
+            resetDualState();
+
+            try {
+                if(!faceapi.nets.ssdMobilenetv1.isLoaded) {
+                    await Promise.all([
+                        faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+                        faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                        faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+                    ]);
+                }
+
+                if(!faceMatcher) {
+                    const labeled = allStudents
+                        .filter(s => s.has_face && s.face_encoding)
+                        .map(s => new faceapi.LabeledFaceDescriptors(`${s.roll_no}::${s.name}`, [new Float32Array(s.face_encoding)]));
+                    if(labeled.length > 0) {
+                        faceMatcher = new faceapi.FaceMatcher(labeled, matchThreshold);
+                    }
+                }
+
+                dualStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: currentFacingMode, width: { ideal: 640 }, height: { ideal: 480 } }
+                });
+                dualVideo.srcObject = dualStream;
+
+                dualVideo.onloadedmetadata = () => {
+                    dualOverlay.width = dualVideo.videoWidth || 640;
+                    dualOverlay.height = dualVideo.videoHeight || 480;
+                    dualDetectionRunning = true;
+                    requestAnimationFrame(dualDetectLoop);
+                    addLog("Dual 2FA Camera stream initialized.", "INFO");
+                    statusText.innerText = "Dual 2FA Mode: Ready. Scan physical ID card.";
+                };
+
+            } catch(e) {
+                statusText.innerText = "Dual Mode camera error: " + e.message;
+                addLog("Camera error: " + e.message, "ERR");
+            } finally {
+                statusSpinner.style.display = 'none';
+            }
+        }
+
+        function stopDualMode() {
+            dualDetectionRunning = false;
+            if(dualStream) {
+                dualStream.getTracks().forEach(t => t.stop());
+                dualStream = null;
+            }
+            if(dualOverlay) {
+                const ctx = dualOverlay.getContext('2d');
+                ctx.clearRect(0, 0, dualOverlay.width, dualOverlay.height);
+            }
+            resetDualState();
+        }
+
+        function resetDualState() {
+            pendingDualStudent = null;
+            dualCardInput.value = '';
+            step1Icon.innerText = "radio_button_unchecked";
+            step1Icon.className = "material-symbols-outlined text-outline text-xl shrink-0";
+            step1Desc.innerText = "Awaiting card scan or input...";
+            step2Icon.innerText = "radio_button_unchecked";
+            step2Icon.className = "material-symbols-outlined text-outline text-xl shrink-0";
+            step2Desc.innerText = "Requires matched face in front of lens";
+            dualResultBanner.className = "p-3 rounded-lg bg-surface-container border border-surface-container-highest text-center text-xs font-mono-code-sm text-outline";
+            dualResultBanner.innerText = "Waiting for both factors to confirm attendance.";
+        }
+
+        function handleDualCard(rawCode) {
+            const student = findStudentByCode(rawCode);
+            if(!student) {
+                playChime(false);
+                step1Icon.innerText = "error";
+                step1Icon.className = "material-symbols-outlined text-error text-xl shrink-0";
+                step1Desc.innerText = `Unknown card: "${rawCode}" (Not in this class)`;
+                dualResultBanner.className = "p-3 rounded-lg bg-rose-500/20 border border-rose-500 text-center text-xs font-mono-code-sm text-rose-300 font-bold";
+                dualResultBanner.innerText = "⚠️ INVALID CARD: Student ID not found in this roster.";
+                addLog(`Unknown ID card scanned in Dual mode: "${rawCode}"`, "ERR");
+                return;
+            }
+
+            pendingDualStudent = student;
+            step1Icon.innerText = "check_circle";
+            step1Icon.className = "material-symbols-outlined text-tertiary-fixed text-xl shrink-0";
+            step1Desc.innerText = `Card Verified: ${student.name} (ID: ${student.student_id || student.roll_no})`;
+            step2Icon.innerText = "pending";
+            step2Icon.className = "material-symbols-outlined text-primary-fixed text-xl shrink-0 animate-pulse";
+            step2Desc.innerText = "Face camera now to verify biometric match...";
+            dualResultBanner.className = "p-3 rounded-lg bg-primary-container/10 border border-primary-container/40 text-center text-xs font-mono-code-sm text-primary-fixed";
+            dualResultBanner.innerText = `CARD DETECTED! Align ${student.name}'s face in camera to confirm.`;
+            addLog(`Factor 1 confirmed for ${student.name} (ID: ${student.student_id || student.roll_no}). Awaiting face match.`, "INFO");
+
+            // If student does not have face vector enrolled
+            if(!student.has_face || !student.face_encoding) {
+                step2Icon.innerText = "warning";
+                step2Icon.className = "material-symbols-outlined text-amber-400 text-xl shrink-0";
+                step2Desc.innerText = "No face enrolled for this student. Allowed via Card override.";
+                dualResultBanner.className = "p-3 rounded-lg bg-amber-500/20 border border-amber-500 text-center text-xs font-mono-code-sm text-amber-300 font-bold";
+                dualResultBanner.innerText = `⚠️ 1-FACTOR OVERRIDE: ${student.name} marked Present (Missing Face Vector).`;
+                markStudent(student.roll_no, 'Present', 'Card');
+                playChime(true);
+                setTimeout(resetDualState, 2500);
+            }
+        }
+
+        dualCardSubmitBtn.addEventListener('click', () => {
+            const val = dualCardInput.value.trim();
+            if(val) handleDualCard(val);
+        });
+        dualCardInput.addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') dualCardSubmitBtn.click();
+        });
+        dualResetBtn.addEventListener('click', resetDualState);
+
+        async function dualDetectLoop() {
+            if(!dualDetectionRunning) return;
+
+            try {
+                if(dualVideo.readyState >= 2) {
+                    const detections = await faceapi.detectAllFaces(
+                        dualVideo, 
+                        new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 })
+                    ).withFaceLandmarks().withFaceDescriptors();
+
+                    const displaySize = { width: dualOverlay.width, height: dualOverlay.height };
+                    const resized = faceapi.resizeResults(detections, displaySize);
+                    const ctx = dualOverlay.getContext('2d');
+                    ctx.clearRect(0, 0, dualOverlay.width, dualOverlay.height);
+
+                    if(resized.length > 0 && faceMatcher) {
+                        resized.forEach(d => {
+                            const bestMatch = faceMatcher.findBestMatch(d.descriptor);
+                            const box = d.detection.box;
+
+                            let drawBoxObject = box;
+                            if (currentFacingMode !== 'environment') {
+                                const newX = dualOverlay.width - (box.x + box.width);
+                                drawBoxObject = new faceapi.Rect(newX, box.y, box.width, box.height);
+                            }
+
+                            if(bestMatch.label !== 'unknown') {
+                                const parts = bestMatch.label.split('::');
+                                const matchRoll = parts[0];
+                                const matchName = parts[1] || matchRoll;
+
+                                if(pendingDualStudent) {
+                                    if(pendingDualStudent.roll_no === matchRoll) {
+                                        // MATCH CONFIRMED! Both factors satisfied!
+                                        if(!dualCooldown) {
+                                            dualCooldown = true;
+                                            step2Icon.innerText = "verified";
+                                            step2Icon.className = "material-symbols-outlined text-tertiary-fixed text-xl shrink-0";
+                                            step2Desc.innerText = `Face Verified: ${matchName} (Distance: ${bestMatch.distance.toFixed(2)})`;
+                                            dualResultBanner.className = "p-3 rounded-lg bg-emerald-500/20 border border-emerald-500 text-center text-xs font-mono-code-sm text-emerald-300 font-bold";
+                                            dualResultBanner.innerText = `✓ DUAL 2FA VERIFIED: ${matchName} marked Present!`;
+                                            markStudent(pendingDualStudent.roll_no, 'Present', 'Dual (Face+Card)');
+                                            playChime(true);
+                                            addLog(`DUAL 2FA SUCCESS: ${matchName} verified by Face + Physical ID Card!`, "ALERT");
+
+                                            setTimeout(() => {
+                                                dualCooldown = false;
+                                                resetDualState();
+                                            }, 2500);
+                                        }
+
+                                        new faceapi.draw.DrawBox(drawBoxObject, {
+                                            label: `2FA MATCH: ${matchName}`,
+                                            boxColor: '#00f0ff',
+                                            lineWidth: 3
+                                        }).draw(dualOverlay);
+
+                                    } else {
+                                        // PROXY MISMATCH ALERT!
+                                        step2Icon.innerText = "gpp_bad";
+                                        step2Icon.className = "material-symbols-outlined text-error text-xl shrink-0";
+                                        step2Desc.innerText = `⚠️ MISMATCH: Face in camera (${matchName}) != Card (${pendingDualStudent.name})!`;
+                                        dualResultBanner.className = "p-3 rounded-lg bg-rose-500/20 border border-rose-500 text-center text-xs font-mono-code-sm text-rose-300 font-bold";
+                                        dualResultBanner.innerText = `⚠️ PROXY DETECTED: Face (${matchName}) does not match ID Card!`;
+                                        
+                                        new faceapi.draw.DrawBox(drawBoxObject, {
+                                            label: `PROXY ALERT: ${matchName}`,
+                                            boxColor: '#ffb4ab',
+                                            lineWidth: 3
+                                        }).draw(dualOverlay);
+                                    }
+                                } else {
+                                    // No card scanned yet: show recognized name
+                                    step2Desc.innerText = `Face recognized: ${matchName}. Scan Physical ID card to finalize 2FA.`;
+                                    step2Icon.innerText = "face";
+                                    step2Icon.className = "material-symbols-outlined text-primary-fixed text-xl shrink-0";
+
+                                    new faceapi.draw.DrawBox(drawBoxObject, {
+                                        label: `${matchName} (Card Needed)`,
+                                        boxColor: '#deb7ff',
+                                        lineWidth: 2
+                                    }).draw(dualOverlay);
+                                }
+                            } else {
+                                new faceapi.draw.DrawBox(drawBoxObject, {
+                                    label: 'Scanning Face...',
+                                    boxColor: '#849495',
+                                    lineWidth: 1
+                                }).draw(dualOverlay);
+                            }
+                        });
+                    }
+                }
+            } catch(e) {}
+
+            if(dualDetectionRunning) {
+                requestAnimationFrame(dualDetectLoop);
+            }
+        }
+
         // ==================== TAB SWITCHING LOGIC ====================
         tabFace.addEventListener('click', async () => {
             switchTab('face');
@@ -934,30 +1276,43 @@
         tabBarcode.addEventListener('click', async () => {
             switchTab('barcode');
         });
+        tabDual.addEventListener('click', async () => {
+            switchTab('dual');
+        });
         tabManual.addEventListener('click', async () => {
             switchTab('manual');
         });
 
         async function switchTab(tab) {
-            [tabFace, tabBarcode, tabManual].forEach(t => t.classList.remove('active'));
+            [tabFace, tabBarcode, tabDual, tabManual].forEach(t => t.classList.remove('active'));
             viewFace.classList.add('hidden');
             viewBarcode.classList.add('hidden');
+            viewDual.classList.add('hidden');
             viewManual.classList.add('hidden');
 
             if(tab === 'face') {
                 tabFace.classList.add('active');
                 viewFace.classList.remove('hidden');
+                stopDualMode();
                 await stopBarcodeMode();
                 await startFaceMode();
             } else if(tab === 'barcode') {
                 tabBarcode.classList.add('active');
                 viewBarcode.classList.remove('hidden');
                 stopFaceMode();
+                stopDualMode();
                 await startBarcodeMode();
+            } else if(tab === 'dual') {
+                tabDual.classList.add('active');
+                viewDual.classList.remove('hidden');
+                stopFaceMode();
+                await stopBarcodeMode();
+                await startDualMode();
             } else if(tab === 'manual') {
                 tabManual.classList.add('active');
                 viewManual.classList.remove('hidden');
                 stopFaceMode();
+                stopDualMode();
                 await stopBarcodeMode();
                 renderRosterTable(rosterSearch.value);
                 statusText.innerText = "Manual Roster view. Click student status to update.";
@@ -981,15 +1336,18 @@
             const timeStr = now.toTimeString().split(' ')[0];
 
             const records = rolls.map(roll_no => {
+                const sObj = allStudents.find(s => s.roll_no === roll_no);
                 return {
                     roll_no: roll_no,
+                    student_id: (sObj && sObj.student_id) ? sObj.student_id : roll_no,
                     date: attendanceLog[roll_no].date,
                     time: timeStr,
                     subject: cSubject,
                     semester: cSemester,
                     dept: cDept,
                     div: cDiv,
-                    status: attendanceLog[roll_no].status
+                    status: attendanceLog[roll_no].status,
+                    method: attendanceLog[roll_no].method || "Face"
                 };
             });
 
@@ -1003,6 +1361,7 @@
 
                 if(result.status === 'success') {
                     stopFaceMode();
+                    stopDualMode();
                     await stopBarcodeMode();
                     alert(`✅ Attendance successfully saved to database!\n\nSubject: ${cSubject}\nTotal: ${records.length}\nPresent: ${presentCount}`);
                     window.location.href = "/teacher/dashboard";
@@ -1020,6 +1379,7 @@
         resetSessionBtn.addEventListener('click', () => {
             if(confirm("Are you sure you want to discard this class session?")) {
                 stopFaceMode();
+                stopDualMode();
                 stopBarcodeMode();
                 location.reload();
             }

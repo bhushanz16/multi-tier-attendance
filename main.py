@@ -56,12 +56,23 @@ def init_db():
             Base.metadata.create_all(bind=engine)
 
     try:
-        # Check and add columns to subjects table if missing
+        # Check and add columns to existing tables if missing
         try:
             with engine.connect() as conn:
                 for col in ["dept", "div"]:
                     try:
                         conn.execute(text(f"ALTER TABLE subjects ADD COLUMN {col} VARCHAR"))
+                        conn.commit()
+                    except Exception:
+                        pass
+                try:
+                    conn.execute(text("ALTER TABLE students ADD COLUMN student_id VARCHAR"))
+                    conn.commit()
+                except Exception:
+                    pass
+                for col in ["student_id", "method"]:
+                    try:
+                        conn.execute(text(f"ALTER TABLE attendance ADD COLUMN {col} VARCHAR"))
                         conn.commit()
                     except Exception:
                         pass
@@ -83,17 +94,25 @@ def init_db():
                 assigned_semester="Semester 3", assigned_div="B"
             ))
         
-        # Seed 5 demo students for instant testing
+        # Seed 5 demo students with distinct student_id (Primary ID) & roll_no
         demo_students = [
-            ("101", "Aarav Sharma", "password", "Semester 3", "Computer", "A"),
-            ("102", "Priya Patel", "password", "Semester 3", "Computer", "A"),
-            ("103", "Rohan Verma", "password", "Semester 3", "Computer", "A"),
-            ("104", "Ananya Iyer", "password", "Semester 3", "Computer", "A"),
-            ("105", "Karan Mehta", "password", "Semester 3", "Computer", "A"),
+            ("101", "STU202401", "Aarav Sharma", "password", "Semester 3", "Computer", "A"),
+            ("102", "STU202402", "Priya Patel", "password", "Semester 3", "Computer", "A"),
+            ("103", "STU202403", "Rohan Verma", "password", "Semester 3", "Computer", "A"),
+            ("104", "STU202404", "Ananya Iyer", "password", "Semester 3", "Computer", "A"),
+            ("105", "STU202405", "Karan Mehta", "password", "Semester 3", "Computer", "A"),
         ]
-        for roll, sname, spwd, sem, sdept, sdiv in demo_students:
-            if not db.query(Student).filter(Student.roll_no == roll).first():
-                db.add(Student(roll_no=roll, name=sname, password=spwd, semester=sem, dept=sdept, div=sdiv))
+        for roll, sid, sname, spwd, sem, sdept, sdiv in demo_students:
+            s_exist = db.query(Student).filter(Student.roll_no == roll).first()
+            if not s_exist:
+                db.add(Student(roll_no=roll, student_id=sid, name=sname, password=spwd, semester=sem, dept=sdept, div=sdiv))
+            elif not s_exist.student_id:
+                s_exist.student_id = sid
+
+        # Backfill any existing students missing student_id
+        all_s = db.query(Student).filter(Student.student_id == None).all()
+        for s in all_s:
+            s.student_id = f"STU{s.roll_no}"
 
         # Seed default subjects for admin so scanner is ready immediately
         if not db.query(Subject).filter(Subject.teacher_username == "admin").first():
@@ -294,12 +313,15 @@ async def student_login_page(request: Request):
 
 @app.post("/student/login")
 async def student_login_post(roll_no: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
-    student = db.query(Student).filter(Student.roll_no == roll_no, Student.password == password).first()
+    student = db.query(Student).filter(
+        ((Student.roll_no == roll_no) | (Student.student_id == roll_no)),
+        Student.password == password
+    ).first()
     if student:
         res = RedirectResponse(url="/student/dashboard", status_code=302)
-        res.set_cookie(key="student_session", value=roll_no, path="/", samesite="lax")
+        res.set_cookie(key="student_session", value=student.roll_no, path="/", samesite="lax")
         return res
-    return HTMLResponse("Invalid roll number or password", status_code=401)
+    return HTMLResponse("Invalid roll number, student ID, or password", status_code=401)
 
 @app.get("/student/register", response_class=HTMLResponse)
 async def student_register_page(request: Request):
@@ -309,13 +331,17 @@ async def student_register_page(request: Request):
 async def student_register_post(
     roll_no: str = Form(...), name: str = Form(...), password: str = Form(...), 
     semester: str = Form(...), dept: str = Form(...), div: str = Form(...), 
+    student_id: str = Form(None),
     db: Session = Depends(get_db)
 ):
-    existing = db.query(Student).filter(Student.roll_no == roll_no).first()
+    existing = db.query(Student).filter(
+        (Student.roll_no == roll_no) | (Student.student_id == (student_id or roll_no))
+    ).first()
     if existing:
-        return HTMLResponse("Student already registered", status_code=400)
+        return HTMLResponse("Student roll number or ID already registered", status_code=400)
     
-    new_student = Student(roll_no=roll_no, name=name, password=password, semester=semester, dept=dept, div=div)
+    sid = student_id if (student_id and student_id.strip()) else f"STU{roll_no}"
+    new_student = Student(roll_no=roll_no, student_id=sid, name=name, password=password, semester=semester, dept=dept, div=div)
     db.add(new_student)
     db.commit()
     return RedirectResponse(url="/student/login", status_code=302)
@@ -440,6 +466,7 @@ async def get_students_by_hierarchy(semester: str, dept: str, div: str, db: Sess
     for s in students:
         res.append({
             "roll_no": s.roll_no,
+            "student_id": s.student_id or s.roll_no,
             "name": s.name,
             "has_face": s.face_encoding is not None,
             "face_encoding": json.loads(s.face_encoding) if s.face_encoding else None
@@ -448,6 +475,7 @@ async def get_students_by_hierarchy(semester: str, dept: str, div: str, db: Sess
 
 class AttendanceRecord(BaseModel):
     roll_no: str
+    student_id: str = None
     date: str
     time: str
     subject: str
@@ -455,6 +483,7 @@ class AttendanceRecord(BaseModel):
     dept: str
     div: str
     status: str
+    method: str = "Face"
 
 @app.post("/api/sync_attendance")
 async def sync_attendance_api(records: List[AttendanceRecord], request: Request, db: Session = Depends(get_db)):
@@ -470,8 +499,12 @@ async def sync_attendance_api(records: List[AttendanceRecord], request: Request,
             continue
         
         new_record = Attendance(
-            roll_no=row.roll_no, date=r_date, timestamp=r_time,
-            subject=row.subject, semester=row.semester, dept=row.dept, div=row.div, status=row.status,
+            roll_no=row.roll_no,
+            student_id=row.student_id or row.roll_no,
+            date=r_date, timestamp=r_time,
+            subject=row.subject, semester=row.semester, dept=row.dept, div=row.div, 
+            status=row.status,
+            method=row.method or "Face",
             teacher_username=t_user # Link record to teacher
         )
         db.add(new_record)
@@ -517,20 +550,22 @@ async def teacher_database(request: Request, db: Session = Depends(get_db)):
 @app.post("/teacher/database/update")
 async def teacher_database_update(
     request: Request, id: int = Form(...), roll_no: str = Form(...), name: str = Form(...), 
-    semester: str = Form(...), dept: str = Form(...), div: str = Form(...), db: Session = Depends(get_db)
+    semester: str = Form(...), dept: str = Form(...), div: str = Form(...), 
+    student_id: str = Form(None), db: Session = Depends(get_db)
 ):
     t_user = get_teacher_user(request)
     if not t_user: return RedirectResponse(url="/teacher/login")
     
     student = db.query(Student).filter(Student.id == id).first()
     if student:
-        old_data = f"{student.roll_no}, {student.name}, {student.semester}, {student.dept}, {student.div}"
+        old_data = f"{student.roll_no}, {student.student_id}, {student.name}, {student.semester}, {student.dept}, {student.div}"
         student.roll_no = roll_no
+        student.student_id = student_id if (student_id and student_id.strip()) else (student.student_id or f"STU{roll_no}")
         student.name = name
         student.semester = semester
         student.dept = dept
         student.div = div
-        new_data = f"{roll_no}, {name}, {semester}, {dept}, {div}"
+        new_data = f"{roll_no}, {student.student_id}, {name}, {semester}, {dept}, {div}"
         db.add(AuditLog(actor=t_user, action_type="MANUAL_DB_EDIT", target_student=roll_no, details=f"Changed from [{old_data}] to [{new_data}]"))
         db.commit()
     return RedirectResponse(url="/teacher/database", status_code=302)

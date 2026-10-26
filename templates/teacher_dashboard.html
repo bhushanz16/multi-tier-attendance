@@ -215,8 +215,13 @@
                                     <tr class="bg-surface-container/60 hover:bg-surface-container-high transition-colors">
                                         <td class="py-space-sm px-space-sm text-on-surface">{{ r.timestamp.strftime('%b %d, %H:%M') if r.timestamp else r.date }}</td>
                                         <td class="py-space-sm px-space-sm">
-                                            <div class="text-on-surface font-semibold">{{ r.roll_no }}</div>
-                                            <div class="text-outline text-label-caps mt-0.5">{{ r.semester }} | {{ r.dept|upper }} | Div {{ r.div }}</div>
+                                            <div class="text-on-surface font-semibold flex items-center gap-2">
+                                                <span>Roll: {{ r.roll_no }}</span>
+                                                {% if r.student_id %}
+                                                <span class="text-[10px] font-mono text-tertiary-fixed bg-surface-container-high px-1.5 py-0.5 rounded border border-surface-container-highest">ID: {{ r.student_id }}</span>
+                                                {% endif %}
+                                            </div>
+                                            <div class="text-outline text-label-caps mt-0.5">{{ r.semester }} | {{ r.dept|upper }} | Div {{ r.div }}{% if r.method %} • {{ r.method }}{% endif %}</div>
                                         </td>
                                         <td class="py-space-sm px-space-sm text-on-surface-variant">{{ r.subject }}</td>
                                         <td class="py-space-sm px-space-sm text-center">

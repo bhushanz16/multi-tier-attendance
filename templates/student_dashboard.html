@@ -83,7 +83,10 @@
 
                 <div class="space-y-1 mb-3">
                     <div class="font-headline-sm text-lg font-bold text-on-surface leading-tight">{{ (student.name if student and student.name else 'Student')|title }}</div>
-                    <div class="font-mono-code-sm text-xs text-tertiary-fixed font-semibold">Roll No: {{ student.roll_no if student else '' }}</div>
+                    <div class="flex items-center gap-3 font-mono-code-sm text-xs">
+                        <span class="text-tertiary-fixed font-bold">ID: {{ student.student_id if (student and student.student_id) else (student.roll_no if student else '') }}</span>
+                        <span class="text-outline">Roll: {{ student.roll_no if student else '' }}</span>
+                    </div>
                     <div class="font-mono-code-sm text-[11px] text-outline">{{ student.semester if student else '' }} • Dept: {{ student.dept if student else '' }} • Div {{ student.div if student else '' }}</div>
                 </div>
 
@@ -216,10 +219,10 @@
     </main>
 
     <script>
-        // Generate Student ID Card Barcode & QR Code
-        const studentRoll = "{{ student.roll_no }}";
+        // Generate Student ID Card Barcode & QR Code (Uses Institutional Student ID)
+        const studentId = "{{ student.student_id if (student and student.student_id) else (student.roll_no if student else '000') }}";
         try {
-            JsBarcode("#studentBarcode", studentRoll, {
+            JsBarcode("#studentBarcode", studentId, {
                 format: "CODE128",
                 lineColor: "#000",
                 width: 2,
@@ -232,7 +235,7 @@
 
         try {
             new QRCode(document.getElementById("studentQRCode"), {
-                text: studentRoll,
+                text: studentId,
                 width: 68,
                 height: 68,
                 colorDark : "#000000",

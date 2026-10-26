@@ -19,7 +19,8 @@ class Teacher(Base):
 class Student(Base):
     __tablename__ = "students"
     id = Column(Integer, primary_key=True, index=True)
-    roll_no = Column(String, unique=True, index=True)
+    student_id = Column(String, index=True, nullable=True) # Primary institutional ID / PRN / Physical Card UID
+    roll_no = Column(String, index=True) # Class Roll Number
     name = Column(String)
     password = Column(String)
     semester = Column(String) # e.g., 'Semester 1', 'Semester 2', etc.
@@ -30,6 +31,7 @@ class Student(Base):
 class Attendance(Base):
     __tablename__ = "attendance"
     id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(String, index=True, nullable=True) # Primary institutional ID / Physical Card UID
     roll_no = Column(String, index=True)
     date = Column(Date, index=True)
     timestamp = Column(DateTime)
@@ -38,6 +40,7 @@ class Attendance(Base):
     dept = Column(String, index=True)
     div = Column(String, index=True)
     status = Column(String)
+    method = Column(String, nullable=True) # 'Face', 'Card', 'Dual (Face+Card)', 'Manual'
     teacher_username = Column(String, index=True) # Links attendance to the specific teacher
 
 class Subject(Base):
