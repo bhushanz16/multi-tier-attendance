@@ -20,9 +20,18 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-# Use v5 for Semester & Teacher Data Isolation
-SQLALCHEMY_DATABASE_URL = "sqlite:///./attendance_v5.db"
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+import os
+
+# Dynamic Cloud DB (Supabase / Neon / PostgreSQL) with Local SQLite fallback
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./attendance_v5.db")
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+if "sqlite" in DATABASE_URL:
+    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+else:
+    engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base.metadata.create_all(bind=engine)
 
@@ -286,18 +295,37 @@ async def enroll_face_api(data: EnrollData, request: Request, db: Session = Depe
     db.commit()
     return JSONResponse({"status": "success"})
 
+class TeacherEnrollData(BaseModel):
+    roll_no: str
+    encoding: list
+
+@app.post("/api/teacher/enroll_face")
+async def teacher_enroll_face_api(data: TeacherEnrollData, request: Request, db: Session = Depends(get_db)):
+    t_user = get_teacher_user(request)
+    if not t_user:
+        return JSONResponse({"status": "error", "message": "Unauthorized"}, status_code=401)
+    
+    student = db.query(Student).filter(Student.roll_no == data.roll_no).first()
+    if not student:
+        return JSONResponse({"status": "error", "message": "Student not found"}, status_code=404)
+        
+    student.face_encoding = json.dumps(data.encoding)
+    db.add(AuditLog(actor=t_user, action_type="MANUAL_FACE_UPLOAD", target_student=data.roll_no, details=f"Teacher uploaded photo biometric encoding for {student.name} ({student.roll_no})"))
+    db.commit()
+    return JSONResponse({"status": "success", "message": f"Biometrics successfully saved for {student.name}"})
+
 @app.get("/api/students/{semester}/{dept}/{div}")
 async def get_students_by_hierarchy(semester: str, dept: str, div: str, db: Session = Depends(get_db)):
     students = db.query(Student).filter(
-        Student.face_encoding != None, 
         Student.semester == semester, Student.dept == dept, Student.div == div
-    ).all()
+    ).order_by(Student.roll_no).all()
     res = []
     for s in students:
         res.append({
             "roll_no": s.roll_no,
             "name": s.name,
-            "face_encoding": json.loads(s.face_encoding)
+            "has_face": s.face_encoding is not None,
+            "face_encoding": json.loads(s.face_encoding) if s.face_encoding else None
         })
     return res
 

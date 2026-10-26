@@ -3,151 +3,401 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Scanner - Attendance Hub</title>
+    <title>Multi-Tier Attendance Terminal - Attendance Hub</title>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com" rel="preconnect"/>
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet"/>
-    <style>@layer base{html,body{margin:0;padding:0;background-color:#0b1326;color:#dae2fd;}::-webkit-scrollbar{display:none;}}</style>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script id="tailwind-config">
-        tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "on-tertiary-container": "#006d4a", "on-secondary": "#4a007f", "secondary": "#deb7ff", "error": "#ffb4ab", "primary": "#dbfcff", "inverse-surface": "#dae2fd", "surface-container-lowest": "#060e20", "on-secondary-container": "#d4a5ff", "on-background": "#dae2fd", "surface-container-highest": "#2d3449", "background": "#0b1326", "inverse-primary": "#006970", "on-secondary-fixed-variant": "#680eac", "tertiary-fixed": "#6ffbbe", "surface-container-high": "#222a3d", "surface-container-low": "#131b2e", "on-primary-fixed-variant": "#004f54", "secondary-fixed": "#f1dbff", "surface-dim": "#0b1326", "on-primary": "#00363a", "primary-fixed": "#7df4ff", "on-error": "#690005", "on-surface": "#dae2fd", "surface-tint": "#00dbe9", "tertiary": "#d8ffe7", "on-tertiary-fixed": "#002113", "on-tertiary-fixed-variant": "#005236", "surface-container": "#171f33", "on-primary-container": "#006970", "on-secondary-fixed": "#2d0050", "surface-variant": "#2d3449", "surface-bright": "#31394d", "on-primary-fixed": "#002022", "secondary-container": "#6b13af", "on-tertiary": "#003824", "tertiary-container": "#65f2b5", "surface": "#0b1326", "primary-container": "#00f0ff", "tertiary-fixed-dim": "#4edea3", "on-surface-variant": "#b9cacb", "on-error-container": "#ffdad6", "inverse-on-surface": "#283044", "secondary-fixed-dim": "#deb7ff", "outline-variant": "#3b494b", "primary-fixed-dim": "#00dbe9", "outline": "#849495", "error-container": "#93000a" }, "borderRadius": { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }, "spacing": { "space-lg": "1rem", "gutter-dense": "0.375rem", "space-md": "0.75rem", "gutter": "0.75rem", "space-sm": "0.5rem", "space-xl": "1.5rem", "margin-compact": "0.5rem", "margin": "1rem", "space-xs": "0.25rem" }, "fontFamily": { "mono-metric-lg": [ "JetBrains Mono" ], "mono-code-sm": [ "JetBrains Mono" ], "body-sm": [ "Inter" ], "headline-sm": [ "Space Grotesk" ], "display-lg": [ "Space Grotesk" ], "body-md": [ "Inter" ], "label-caps": [ "JetBrains Mono" ], "mono-metric-md": [ "JetBrains Mono" ], "headline-lg": [ "Space Grotesk" ], "body-lg": [ "Inter" ] }, "fontSize": { "mono-metric-lg": [ "18px", { "lineHeight": "24px", "letterSpacing": "-0.02em", "fontWeight": "600" } ], "mono-code-sm": [ "11px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "400" } ], "body-sm": [ "11px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "400" } ], "headline-sm": [ "18px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "600" } ], "display-lg": [ "32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" } ], "body-md": [ "13px", { "lineHeight": "18px", "letterSpacing": "0em", "fontWeight": "400" } ], "label-caps": [ "10px", { "lineHeight": "12px", "letterSpacing": "0.08em", "fontWeight": "700" } ], "mono-metric-md": [ "13px", { "lineHeight": "18px", "letterSpacing": "0em", "fontWeight": "500" } ], "headline-lg": [ "24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" } ], "body-lg": [ "15px", { "lineHeight": "22px", "letterSpacing": "-0.005em", "fontWeight": "400" } ] } } } };
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
     <style>
-        .video-container { position: relative; width: 100%; border-radius: 4px; overflow: hidden; display: none; background: #000; border: 1px solid rgba(0,240,255,0.4); box-shadow: inset 0 0 20px rgba(0,240,255,0.1); }
-        video { width: 100%; height: auto; display:block; transform: scaleX(-1); /* Mirror by default */ }
-        canvas { width: 100%; height: auto; display:block; position: absolute; top: 0; left: 0; }
-        .env-facing { transform: scaleX(1); /* Don't mirror back camera */ }
-        .hud-corner { position: absolute; width: 20px; height: 20px; border: 2px solid #00f0ff; }
+        @layer base{html,body{margin:0;padding:0;background-color:#0b1326;color:#dae2fd;}::-webkit-scrollbar{display:none;}}
+        .video-container { position: relative; width: 100%; border-radius: 8px; overflow: hidden; background: #000; border: 1px solid rgba(0,240,255,0.4); box-shadow: inset 0 0 20px rgba(0,240,255,0.1); }
+        video { width: 100%; height: auto; display:block; transform: scaleX(-1); /* Mirror front camera */ }
+        canvas#overlay { width: 100%; height: auto; display:block; position: absolute; top: 0; left: 0; }
+        .env-facing { transform: scaleX(1) !important; }
+        .hud-corner { position: absolute; width: 22px; height: 22px; border: 2px solid #00f0ff; pointer-events: none; }
         .hud-tl { top: 10px; left: 10px; border-right: none; border-bottom: none; }
         .hud-tr { top: 10px; right: 10px; border-left: none; border-bottom: none; }
         .hud-bl { bottom: 10px; left: 10px; border-right: none; border-top: none; }
         .hud-br { bottom: 10px; right: 10px; border-left: none; border-top: none; }
+        
+        /* Barcode reader container styling */
+        #barcodeReader { width: 100%; background: #000; border-radius: 8px; overflow: hidden; }
+        #barcodeReader video { transform: none !important; }
+        
+        .tab-btn.active {
+            background: rgba(0, 240, 255, 0.15);
+            border-color: #00f0ff;
+            color: #7df4ff;
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.25);
+        }
+        .status-pill-present { background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #6ee7b7; }
+        .status-pill-absent { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #fca5a5; }
+        .status-pill-late { background: rgba(245, 158, 11, 0.2); border: 1px solid #f59e0b; color: #fde68a; }
     </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="tailwind-config">
+        tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "on-tertiary-container": "#006d4a", "on-secondary": "#4a007f", "secondary": "#deb7ff", "error": "#ffb4ab", "primary": "#dbfcff", "inverse-surface": "#dae2fd", "surface-container-lowest": "#060e20", "on-secondary-container": "#d4a5ff", "on-background": "#dae2fd", "surface-container-highest": "#2d3449", "background": "#0b1326", "inverse-primary": "#006970", "on-secondary-fixed-variant": "#680eac", "tertiary-fixed": "#6ffbbe", "surface-container-high": "#222a3d", "surface-container-low": "#131b2e", "on-primary-fixed-variant": "#004f54", "secondary-fixed": "#f1dbff", "surface-dim": "#0b1326", "on-primary": "#00363a", "primary-fixed": "#7df4ff", "on-error": "#690005", "on-surface": "#dae2fd", "surface-tint": "#00dbe9", "tertiary": "#d8ffe7", "on-tertiary-fixed": "#002113", "on-tertiary-fixed-variant": "#005236", "surface-container": "#171f33", "on-primary-container": "#006970", "on-secondary-fixed": "#2d0050", "surface-variant": "#2d3449", "surface-bright": "#31394d", "on-primary-fixed": "#002022", "secondary-container": "#6b13af", "on-tertiary": "#003824", "tertiary-container": "#65f2b5", "surface": "#0b1326", "primary-container": "#00f0ff", "tertiary-fixed-dim": "#4edea3", "on-surface-variant": "#b9cacb", "on-error-container": "#ffdad6", "inverse-on-surface": "#283044", "secondary-fixed-dim": "#deb7ff", "outline-variant": "#3b494b", "primary-fixed-dim": "#00dbe9", "outline": "#849495", "error-container": "#93000a" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "fontFamily": { "mono-metric-lg": [ "JetBrains Mono" ], "mono-code-sm": [ "JetBrains Mono" ], "body-sm": [ "Inter" ], "headline-sm": [ "Space Grotesk" ], "display-lg": [ "Space Grotesk" ], "body-md": [ "Inter" ], "label-caps": [ "JetBrains Mono" ], "mono-metric-md": [ "JetBrains Mono" ], "headline-lg": [ "Space Grotesk" ], "body-lg": [ "Inter" ] } } } };
+    </script>
+    <!-- Face API for Biometric Recognition -->
+    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
+    <!-- HTML5 QR Code & 1D Barcode Library for Student ID Cards -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 </head>
-<body class="bg-background font-body-md text-on-surface antialiased">
+<body class="bg-background font-body-md text-on-surface antialiased min-h-screen flex flex-col">
+
     <!-- HEADER -->
-    <header class="h-14 bg-surface-container-lowest border-b border-surface-container-highest flex items-center justify-between px-space-lg shadow-[0_1px_8px_rgba(0,0,0,0.3)]">
-        <div class="flex items-center gap-space-md">
-            <span class="material-symbols-outlined text-primary-fixed text-2xl">memory</span>
+    <header class="h-16 bg-surface-container-lowest border-b border-surface-container-highest flex items-center justify-between px-6 shadow-lg z-30">
+        <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-primary-fixed text-3xl">verified_user</span>
             <div class="flex flex-col">
-                <span class="font-headline-sm text-headline-sm text-primary tracking-tight leading-none">FACE SCANNER</span>
-                <span class="font-label-caps text-label-caps text-outline uppercase tracking-wider">Take Class Attendance</span>
+                <span class="font-headline-sm text-lg text-primary tracking-tight font-bold">MULTI-TIER ATTENDANCE TERMINAL</span>
+                <span class="font-mono-code-sm text-xs text-outline tracking-wider">AI Face Scan • ID Barcode / QR • Manual Roster</span>
             </div>
         </div>
-        <div class="flex items-center gap-space-md">
-            <button id="switchCameraBtn" class="hidden flex items-center gap-gutter-dense bg-surface-container hover:bg-surface-container-high text-on-surface font-headline-sm text-mono-code-sm px-space-sm py-space-xs rounded-DEFAULT border border-surface-container-highest transition-colors">
-                <span class="material-symbols-outlined text-sm">cameraswitch</span>
-                <span>SWITCH CAMERA</span>
-            </button>
-            <a href="/teacher/dashboard" class="flex items-center gap-gutter-dense bg-surface-container hover:bg-surface-container-high text-on-surface font-headline-sm text-mono-code-sm px-space-sm py-space-xs rounded-DEFAULT border border-surface-container-highest transition-colors">
+        <div class="flex items-center gap-3">
+            <div id="statsBadge" class="hidden sm:flex items-center gap-2 bg-surface-container-high border border-surface-container-highest px-3 py-1 rounded-lg text-xs font-mono-code-sm">
+                <span class="text-outline">PRESENT:</span>
+                <span id="badgePresentCount" class="text-tertiary-fixed font-bold">0</span>
+                <span class="text-outline">/</span>
+                <span id="badgeTotalCount" class="text-on-surface">0</span>
+            </div>
+            <a href="/teacher/dashboard" class="flex items-center gap-1.5 bg-surface-container hover:bg-surface-container-high text-on-surface font-headline-sm text-xs px-3 py-2 rounded-lg border border-surface-container-highest transition-colors">
                 <span class="material-symbols-outlined text-sm">arrow_back</span>
-                <span>BACK TO DASHBOARD</span>
+                <span>DASHBOARD</span>
             </a>
         </div>
     </header>
 
-    <main class="w-full max-w-5xl mx-auto p-space-lg">
+    <main class="w-full max-w-6xl mx-auto p-4 sm:p-6 flex-1 flex flex-col gap-5">
         
-        <!-- SETUP CARD -->
-        <div id="setupDiv" class="bg-surface-container-low rounded-xl p-space-lg shadow-xl border border-surface-container-highest space-y-space-md">
-            <div class="flex items-center gap-space-xs border-b border-surface-container-highest pb-space-sm">
-                <span class="w-2.5 h-2.5 rounded-full bg-tertiary-container shadow-[0_0_8px_rgba(101,242,181,0.6)]"></span>
-                <h2 class="font-headline-sm text-headline-sm text-tertiary-fixed uppercase">Select Class Details</h2>
+        <!-- CLASS CONFIGURATION CARD -->
+        <div id="setupDiv" class="bg-surface-container-low rounded-xl p-5 shadow-xl border border-surface-container-highest space-y-4">
+            <div class="flex items-center justify-between border-b border-surface-container-highest pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-tertiary-container shadow-[0_0_8px_rgba(101,242,181,0.8)]"></span>
+                    <h2 class="font-headline-sm text-base text-tertiary-fixed uppercase font-bold tracking-wide">1. Select Lecture / Class Session</h2>
+                </div>
+                <span class="text-xs font-mono-code-sm text-outline">All 3 attendance modes share this session</span>
             </div>
             
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-space-md font-mono-code-sm">
-                <div class="flex flex-col gap-1">
-                    <label class="text-label-caps text-outline">Semester</label>
-                    <select id="selSemester" class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-2 focus:border-primary-container focus:outline-none focus:shadow-[inset_0_0_4px_rgba(0,240,255,0.2)] transition-all">
-                        <option value="">Select...</option>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 font-mono-code-sm text-xs">
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-outline uppercase font-semibold">Semester</label>
+                    <select id="selSemester" class="bg-surface-container text-on-surface border border-surface-container-highest rounded-lg px-3 py-2.5 focus:border-primary focus:outline-none transition-all">
+                        <option value="">Select Semester...</option>
                         {% for y in semesters %}<option value="{{ y }}">{{ y }}</option>{% endfor %}
                     </select>
                 </div>
-                <div class="flex flex-col gap-1">
-                    <label class="text-label-caps text-outline">Department</label>
-                    <select id="selDept" class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-2 focus:border-primary-container focus:outline-none focus:shadow-[inset_0_0_4px_rgba(0,240,255,0.2)] transition-all">
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-outline uppercase font-semibold">Department</label>
+                    <select id="selDept" class="bg-surface-container text-on-surface border border-surface-container-highest rounded-lg px-3 py-2.5 focus:border-primary focus:outline-none transition-all">
                         {% for d in depts %}<option value="{{ d }}">{{ d }}</option>{% endfor %}
                     </select>
                 </div>
-                <div class="flex flex-col gap-1">
-                    <label class="text-label-caps text-outline">Class Division</label>
-                    <select id="selDiv" class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-2 focus:border-primary-container focus:outline-none focus:shadow-[inset_0_0_4px_rgba(0,240,255,0.2)] transition-all">
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-outline uppercase font-semibold">Class Division</label>
+                    <select id="selDiv" class="bg-surface-container text-on-surface border border-surface-container-highest rounded-lg px-3 py-2.5 focus:border-primary focus:outline-none transition-all">
                         {% for d in divs %}<option value="{{ d }}">{{ d }}</option>{% endfor %}
                     </select>
                 </div>
-                <div class="flex flex-col gap-1">
-                    <label class="text-label-caps text-outline">Subject</label>
-                    <select id="selSubject" class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-2 focus:border-primary-container focus:outline-none focus:shadow-[inset_0_0_4px_rgba(0,240,255,0.2)] transition-all">
-                        <option value="">Select a semester first...</option>
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-outline uppercase font-semibold">Subject / Course</label>
+                    <select id="selSubject" class="bg-surface-container text-on-surface border border-surface-container-highest rounded-lg px-3 py-2.5 focus:border-primary focus:outline-none transition-all">
+                        <option value="">Select semester first...</option>
                     </select>
                 </div>
             </div>
 
-            <button id="startBtn" class="w-full mt-4 flex items-center justify-center gap-space-xs bg-primary-container/10 border border-primary-container text-primary-fixed hover:bg-primary-container hover:text-on-primary-container font-headline-sm text-mono-code-sm py-space-sm rounded-DEFAULT shadow-[0_0_10px_rgba(0,240,255,0.2)] transition-all">
-                <span class="material-symbols-outlined text-base">radar</span>
-                <span>START SCANNER</span>
+            <button id="startSessionBtn" class="w-full mt-2 flex items-center justify-center gap-2 bg-primary-container text-on-primary-container font-headline-sm font-bold text-sm py-3 rounded-lg shadow-[0_0_15px_rgba(0,240,255,0.3)] hover:opacity-95 transition-all">
+                <span class="material-symbols-outlined text-lg">play_arrow</span>
+                <span>INITIALIZE CLASS ATTENDANCE SESSION</span>
             </button>
         </div>
 
-        <!-- CAMERA SYSTEM -->
-        <div id="status" class="hidden mb-space-md bg-surface-container-low border border-primary-container/50 text-primary-fixed font-mono-code-sm text-mono-code-sm p-space-sm rounded-DEFAULT text-center shadow-[0_0_12px_rgba(0,240,255,0.2)]">
-            Starting systems...
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-space-lg">
+        <!-- ACTIVE ATTENDANCE WORKSPACE (Hidden initially) -->
+        <div id="sessionWorkspace" class="hidden flex-1 flex flex-col gap-4">
             
-            <div class="lg:col-span-2 space-y-space-md">
-                <div class="video-container" id="videoContainer">
-                    <div class="hud-corner hud-tl"></div>
-                    <div class="hud-corner hud-tr"></div>
-                    <div class="hud-corner hud-bl"></div>
-                    <div class="hud-corner hud-br"></div>
-                    <div class="absolute top-4 left-4 z-10 flex items-center gap-space-xs bg-surface-container-highest/80 backdrop-blur-sm border border-surface-variant rounded-DEFAULT px-space-xs py-0.5 font-mono-code-sm text-label-caps text-primary-fixed">
-                        <span class="w-1.5 h-1.5 rounded-full bg-primary-container animate-pulse"></span>
-                        LIVE SCANNER
+            <!-- SESSION BANNER & MODE SELECTOR TABS -->
+            <div class="bg-surface-container-low rounded-xl p-4 border border-surface-container-highest flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <div>
+                        <div class="font-headline-sm text-base text-primary font-bold" id="sessionTitle">Class In Progress</div>
+                        <div class="font-mono-code-sm text-xs text-outline" id="sessionSubtitle">Semester • Dept • Div</div>
                     </div>
-                    <video id="video" autoplay muted playsinline></video>
-                    <canvas id="overlay"></canvas>
                 </div>
-                
-                <button id="stopBtn" class="hidden w-full flex items-center justify-center gap-space-xs bg-error-container/20 border border-error text-error hover:bg-error hover:text-white font-headline-sm text-mono-code-sm py-space-sm rounded-DEFAULT shadow-[0_0_10px_rgba(239,68,68,0.3)] transition-all">
-                    <span class="material-symbols-outlined text-base">stop_circle</span>
-                    <span>STOP & SAVE ATTENDANCE</span>
-                </button>
+
+                <!-- 3 ATTENDANCE MODE TABS -->
+                <div class="flex items-center gap-2 bg-surface-container-lowest p-1 rounded-lg border border-surface-container-highest">
+                    <button id="tabFace" class="tab-btn active flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-mono-code-sm border border-transparent transition-all">
+                        <span class="material-symbols-outlined text-base">face</span>
+                        <span>1. AI Face Scanner</span>
+                    </button>
+                    <button id="tabBarcode" class="tab-btn flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-mono-code-sm border border-transparent transition-all">
+                        <span class="material-symbols-outlined text-base">qr_code_scanner</span>
+                        <span>2. ID Barcode / QR</span>
+                    </button>
+                    <button id="tabManual" class="tab-btn flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-mono-code-sm border border-transparent transition-all">
+                        <span class="material-symbols-outlined text-base">checklist</span>
+                        <span>3. Manual Roster</span>
+                    </button>
+                </div>
             </div>
 
-            <!-- TERMINAL LOG -->
-            <div id="logCard" class="hidden bg-surface-container-lowest rounded-xl p-space-md border border-surface-container-highest shadow-inner flex flex-col h-[500px]">
-                <div class="flex items-center justify-between pb-gutter-dense border-b border-surface-container-highest/30 text-outline mb-space-xs">
-                    <span class="flex items-center gap-gutter text-tertiary-fixed font-label-caps text-label-caps uppercase">
-                        <span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span> LOGS
-                    </span>
-                    <span class="font-mono-code-sm text-mono-code-sm" id="displaySubject"></span>
-                </div>
-                <ul id="logList" class="flex-1 overflow-y-auto space-y-1 font-mono-code-sm text-mono-code-sm text-on-surface-variant">
-                </ul>
+            <!-- STATUS MESSAGE BAR -->
+            <div id="statusAlert" class="bg-surface-container-high border border-primary-container/40 text-primary-fixed text-xs font-mono-code-sm px-4 py-2.5 rounded-lg flex items-center justify-between">
+                <span id="statusText">Session active. Ready to take attendance.</span>
+                <span class="material-symbols-outlined text-sm animate-spin" id="statusSpinner" style="display:none;">sync</span>
             </div>
-            
+
+            <!-- TAB CONTENT 1: AI FACE RECOGNITION -->
+            <div id="viewFace" class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                <div class="lg:col-span-2 space-y-3">
+                    <div class="video-container" id="videoContainer">
+                        <div class="hud-corner hud-tl"></div>
+                        <div class="hud-corner hud-tr"></div>
+                        <div class="hud-corner hud-bl"></div>
+                        <div class="hud-corner hud-br"></div>
+                        <div class="absolute top-3 left-3 z-10 flex items-center gap-2 bg-surface-container-highest/80 backdrop-blur-md border border-surface-variant rounded-md px-2.5 py-1 text-xs font-mono-code-sm text-primary-fixed">
+                            <span class="w-2 h-2 rounded-full bg-primary-container animate-pulse"></span>
+                            AI BIOMETRIC STREAM
+                        </div>
+                        <div class="absolute top-3 right-3 z-10 flex items-center gap-2">
+                            <button id="switchCameraBtn" class="bg-surface-container-highest/80 backdrop-blur-md border border-surface-variant hover:bg-surface-container-high text-xs px-2.5 py-1 rounded-md text-primary flex items-center gap-1">
+                                <span class="material-symbols-outlined text-xs">flip_camera_ios</span>
+                                <span>Flip Camera</span>
+                            </button>
+                        </div>
+                        <video id="video" autoplay muted playsinline></video>
+                        <canvas id="overlay"></canvas>
+                    </div>
+
+                    <!-- Sensitivity / Model Controls -->
+                    <div class="bg-surface-container-low p-3.5 rounded-xl border border-surface-container-highest flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-mono-code-sm">
+                        <div class="flex items-center gap-2 w-full sm:w-auto">
+                            <span class="text-outline whitespace-nowrap">Matching Sensitivity:</span>
+                            <input type="range" id="thresholdSlider" min="0.40" max="0.65" step="0.02" value="0.55" class="w-32 accent-primary-container cursor-pointer">
+                            <span id="thresholdVal" class="text-primary font-bold">0.55</span>
+                        </div>
+                        <span class="text-outline text-[11px]">Recommended: 0.55 for normal lighting</span>
+                    </div>
+                </div>
+
+                <!-- Live Feed Logs -->
+                <div class="bg-surface-container-lowest rounded-xl p-4 border border-surface-container-highest shadow-inner flex flex-col h-[460px]">
+                    <div class="flex items-center justify-between pb-2 border-b border-surface-container-highest/40 text-xs font-mono-code-sm mb-2">
+                        <span class="text-tertiary-fixed font-bold uppercase flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-tertiary"></span> REAL-TIME LOGS
+                        </span>
+                        <span class="text-outline" id="sessionLogCount">0 events</span>
+                    </div>
+                    <ul id="logList" class="flex-1 overflow-y-auto space-y-2 text-xs font-mono-code-sm text-on-surface-variant pr-1">
+                    </ul>
+                </div>
+            </div>
+
+            <!-- TAB CONTENT 2: ID CARD BARCODE & QR SCANNER -->
+            <div id="viewBarcode" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-5">
+                <div class="lg:col-span-2 space-y-4">
+                    <div class="bg-surface-container-low p-5 rounded-xl border border-surface-container-highest space-y-4">
+                        <div class="flex items-center justify-between border-b border-surface-container-highest pb-3">
+                            <div>
+                                <h3 class="font-headline-sm text-base text-secondary-fixed font-bold">Student ID Barcode / QR Camera Scanner</h3>
+                                <p class="text-xs font-mono-code-sm text-outline mt-0.5">Point the camera at student physical ID barcode or mobile screen QR code</p>
+                            </div>
+                            <span class="material-symbols-outlined text-secondary-fixed text-2xl">qr_code_scanner</span>
+                        </div>
+
+                        <div id="barcodeReader" class="overflow-hidden border border-secondary-container/40"></div>
+
+                        <!-- Manual USB Handheld Scanner / Keyboard Wedge Input -->
+                        <div class="pt-3 border-t border-surface-container-highest flex flex-col gap-2">
+                            <label class="text-xs font-mono-code-sm text-outline font-semibold">Or Scan / Type Roll No with USB Handheld Barcode Scanner:</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="manualBarcodeInput" placeholder="Scan barcode or type Roll Number..." class="flex-1 bg-surface-container text-on-surface border border-surface-container-highest rounded-lg px-3 py-2 text-xs font-mono-code-sm focus:border-secondary-container focus:outline-none">
+                                <button id="submitBarcodeBtn" class="bg-secondary-container text-white px-4 py-2 rounded-lg text-xs font-mono-code-sm font-semibold hover:opacity-90">
+                                    VERIFY & MARK
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Last Scanned Student Badge -->
+                <div class="space-y-4">
+                    <div class="bg-surface-container-low rounded-xl p-5 border border-surface-container-highest text-center space-y-3">
+                        <span class="text-xs font-mono-code-sm text-outline uppercase tracking-wider">Latest Scanned Card</span>
+                        <div id="lastScannedBox" class="p-4 rounded-lg bg-surface-container-lowest border border-surface-container-highest min-h-[160px] flex flex-col items-center justify-center">
+                            <span class="material-symbols-outlined text-outline text-4xl mb-2">badge</span>
+                            <span class="text-xs font-mono-code-sm text-outline">Scan a student ID card to verify</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-surface-container-lowest p-4 rounded-xl border border-surface-container-highest text-xs font-mono-code-sm space-y-2 text-outline">
+                        <div class="font-bold text-on-surface flex items-center gap-1.5 text-secondary-fixed">
+                            <span class="material-symbols-outlined text-base">info</span>
+                            <span>Supported Credentials</span>
+                        </div>
+                        <p>• University ID Barcodes (Code 128, EAN-13, UPC)</p>
+                        <p>• Student Portal Digital QR Code</p>
+                        <p>• Attached USB Laser Barcode Readers</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB CONTENT 3: MANUAL ATTENDANCE ROSTER -->
+            <div id="viewManual" class="hidden space-y-4">
+                <div class="bg-surface-container-low rounded-xl p-5 border border-surface-container-highest space-y-4">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-surface-container-highest pb-3">
+                        <div>
+                            <h3 class="font-headline-sm text-base text-primary font-bold">Class Student Roster Checklist</h3>
+                            <p class="text-xs font-mono-code-sm text-outline mt-0.5">Toggle Present / Absent / Late for each student in one click</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button id="markAllPresentBtn" class="bg-emerald-500/20 border border-emerald-500 text-emerald-300 hover:bg-emerald-500 hover:text-white px-3 py-1.5 rounded-lg text-xs font-mono-code-sm transition-all">
+                                ✓ Mark All Present
+                            </button>
+                            <button id="markAllAbsentBtn" class="bg-rose-500/20 border border-rose-500 text-rose-300 hover:bg-rose-500 hover:text-white px-3 py-1.5 rounded-lg text-xs font-mono-code-sm transition-all">
+                                ✗ Mark All Absent
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Search Filter -->
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-outline text-base">search</span>
+                        <input type="text" id="rosterSearch" placeholder="Filter roster by student name or roll number..." class="flex-1 bg-surface-container text-on-surface border border-surface-container-highest rounded-lg px-3 py-2 text-xs font-mono-code-sm focus:border-primary focus:outline-none">
+                    </div>
+
+                    <!-- Roster Table -->
+                    <div class="overflow-x-auto rounded-lg border border-surface-container-highest">
+                        <table class="w-full text-left font-mono-code-sm text-xs">
+                            <thead class="bg-surface-container-lowest text-outline uppercase font-semibold">
+                                <tr>
+                                    <th class="py-2.5 px-4">Roll No</th>
+                                    <th class="py-2.5 px-4">Student Name</th>
+                                    <th class="py-2.5 px-4">Biometric Status</th>
+                                    <th class="py-2.5 px-4 text-center">Attendance Status</th>
+                                    <th class="py-2.5 px-4 text-right">Quick Toggle</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rosterTableBody" class="divide-y divide-surface-container-highest/40">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BOTTOM SAVE & SYNC CONTROLS -->
+            <div class="bg-surface-container-low rounded-xl p-4 border border-surface-container-highest flex flex-col sm:flex-row items-center justify-between gap-4 mt-2">
+                <div class="flex items-center gap-3 text-xs font-mono-code-sm">
+                    <span class="text-outline">Summary:</span>
+                    <span id="finalStats" class="text-on-surface font-semibold">0 Total • 0 Present • 0 Absent</span>
+                </div>
+
+                <div class="flex items-center gap-3 w-full sm:w-auto">
+                    <button id="resetSessionBtn" class="flex-1 sm:flex-none px-4 py-2.5 rounded-lg border border-surface-container-highest hover:bg-surface-container text-xs font-mono-code-sm text-outline hover:text-white transition-colors">
+                        Discard & Reset
+                    </button>
+                    <button id="saveAttendanceBtn" class="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-400 text-black font-headline-sm font-bold text-xs px-6 py-2.5 rounded-lg shadow-[0_0_15px_rgba(16,185,129,0.4)] hover:opacity-95 transition-all">
+                        <span class="material-symbols-outlined text-base">cloud_upload</span>
+                        <span>SAVE & FINALIZE ATTENDANCE</span>
+                    </button>
+                </div>
+            </div>
+
         </div>
+
     </main>
 
+    <!-- Audio Beep Generator for Scanner -->
     <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playChime(success = true) {
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.type = "sine";
+                if(success) {
+                    osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+                    osc.frequency.setValueAtTime(880.00, audioCtx.currentTime + 0.08); // A5
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.25);
+                } else {
+                    osc.frequency.setValueAtTime(220, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.3);
+                }
+            } catch(e) { console.log(e); }
+        }
+    </script>
+
+    <script>
+        // DOM Elements
+        const selSemester = document.getElementById('selSemester');
+        const selDept = document.getElementById('selDept');
+        const selDiv = document.getElementById('selDiv');
+        const selSubject = document.getElementById('selSubject');
+        const startSessionBtn = document.getElementById('startSessionBtn');
+        const setupDiv = document.getElementById('setupDiv');
+        const sessionWorkspace = document.getElementById('sessionWorkspace');
+        const statusAlert = document.getElementById('statusAlert');
+        const statusText = document.getElementById('statusText');
+        const statusSpinner = document.getElementById('statusSpinner');
+        const logList = document.getElementById('logList');
+        const sessionTitle = document.getElementById('sessionTitle');
+        const sessionSubtitle = document.getElementById('sessionSubtitle');
+        const badgePresentCount = document.getElementById('badgePresentCount');
+        const badgeTotalCount = document.getElementById('badgeTotalCount');
+        const statsBadge = document.getElementById('statsBadge');
+        const finalStats = document.getElementById('finalStats');
+        const saveAttendanceBtn = document.getElementById('saveAttendanceBtn');
+        const resetSessionBtn = document.getElementById('resetSessionBtn');
+
+        // Tabs
+        const tabFace = document.getElementById('tabFace');
+        const tabBarcode = document.getElementById('tabBarcode');
+        const tabManual = document.getElementById('tabManual');
+        const viewFace = document.getElementById('viewFace');
+        const viewBarcode = document.getElementById('viewBarcode');
+        const viewManual = document.getElementById('viewManual');
+
+        // Video / Face Recognition Elements
         const video = document.getElementById('video');
         const overlay = document.getElementById('overlay');
-        const stopBtn = document.getElementById('stopBtn');
-        const startBtn = document.getElementById('startBtn');
         const switchCameraBtn = document.getElementById('switchCameraBtn');
-        const statusDiv = document.getElementById('status');
-        const logList = document.getElementById('logList');
-        const setupDiv = document.getElementById('setupDiv');
-        const videoContainer = document.getElementById('videoContainer');
-        const logCard = document.getElementById('logCard');
-        const selSemester = document.getElementById('selSemester');
-        const selSubject = document.getElementById('selSubject');
-        
-        // Subject Data passed from backend
+        const thresholdSlider = document.getElementById('thresholdSlider');
+        const thresholdVal = document.getElementById('thresholdVal');
+
+        // Barcode / Manual Elements
+        const manualBarcodeInput = document.getElementById('manualBarcodeInput');
+        const submitBarcodeBtn = document.getElementById('submitBarcodeBtn');
+        const lastScannedBox = document.getElementById('lastScannedBox');
+        const rosterTableBody = document.getElementById('rosterTableBody');
+        const rosterSearch = document.getElementById('rosterSearch');
+        const markAllPresentBtn = document.getElementById('markAllPresentBtn');
+        const markAllAbsentBtn = document.getElementById('markAllAbsentBtn');
+
+        // State variables
+        let cSemester, cDept, cDiv, cSubject;
+        let allStudents = []; // All students in this class
+        let attendanceLog = {}; // Key: roll_no -> { name, status: 'Present'|'Absent'|'Late', method: 'Face'|'Barcode'|'Manual' }
+        let currentFacingMode = 'user';
+        let currentStream = null;
+        let faceMatcher = null;
+        let faceDetectionRunning = false;
+        let html5QrScanner = null;
+        let barcodeActive = false;
+        let matchThreshold = 0.55;
+
+        // Subject list from backend
         const allSubjects = [
             {% for s in subjects %}
                 { name: "{{ s.name }}", code: "{{ s.code }}", semester: "{{ s.semester }}" },
@@ -170,203 +420,546 @@
             }
         });
 
-        const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
-        let faceMatcher = null;
-        let running = true;
-        let attendanceLog = {}; 
-        let knownStudents = [];
-        let cSemester, cDept, cDiv, cSubject;
-        let currentFacingMode = 'user'; // front camera by default
-        let currentStream = null;
+        // Threshold slider
+        thresholdSlider.addEventListener('input', (e) => {
+            matchThreshold = parseFloat(e.target.value);
+            thresholdVal.innerText = matchThreshold.toFixed(2);
+            updateFaceMatcherThreshold();
+        });
 
-        function addTerminalLog(msg, type="INFO") {
-            const time = new Date().toISOString().split('T')[1].slice(0,12) + " UTC";
+        function updateFaceMatcherThreshold() {
+            if(!faceMatcher) return;
+            const labeledDescriptors = allStudents
+                .filter(s => s.has_face && s.face_encoding)
+                .map(s => new faceapi.LabeledFaceDescriptors(`${s.roll_no}::${s.name}`, [new Float32Array(s.face_encoding)]));
+            if(labeledDescriptors.length > 0) {
+                faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, matchThreshold);
+                addLog(`Sensitivity updated to ${matchThreshold.toFixed(2)}`, "INFO");
+            }
+        }
+
+        function addLog(msg, type="INFO") {
+            const time = new Date().toTimeString().split(' ')[0];
             let typeColor = "text-tertiary-fixed";
             if(type === "ALERT") typeColor = "text-primary-container";
+            if(type === "BARCODE") typeColor = "text-secondary-fixed";
+            if(type === "MANUAL") typeColor = "text-amber-400";
             if(type === "ERR") typeColor = "text-error";
 
             const li = document.createElement('li');
-            li.className = "flex gap-space-sm border-b border-surface-container-highest/20 pb-1";
+            li.className = "flex gap-2 border-b border-surface-container-highest/20 pb-1";
             li.innerHTML = `
-                <span class="text-outline shrink-0">${time}</span>
+                <span class="text-outline shrink-0">[${time}]</span>
                 <span class="${typeColor} shrink-0">[${type}]</span>
                 <span class="text-on-surface truncate">${msg}</span>
             `;
             logList.insertBefore(li, logList.firstChild);
+            document.getElementById('sessionLogCount').innerText = `${logList.children.length} events`;
         }
 
-        async function startVideoStream() {
-            if (currentStream) {
-                currentStream.getTracks().forEach(track => track.stop());
+        // ==================== INITIALIZE CLASS SESSION ====================
+        startSessionBtn.addEventListener('click', async () => {
+            cSemester = selSemester.value;
+            cDept = selDept.value;
+            cDiv = selDiv.value;
+            cSubject = selSubject.value;
+
+            if(!cSemester || !cDept || !cDiv || !cSubject) {
+                alert("Please select all class details (Semester, Department, Division, and Subject).");
+                return;
             }
-            currentStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacingMode } });
+
+            statusSpinner.style.display = 'inline-block';
+            statusText.innerText = `Fetching student roster for ${cSemester} - ${cDept} - Div ${cDiv}...`;
+
+            try {
+                const res = await fetch(`/api/students/${encodeURIComponent(cSemester)}/${encodeURIComponent(cDept)}/${encodeURIComponent(cDiv)}`);
+                allStudents = await res.json();
+
+                if(!allStudents || allStudents.length === 0) {
+                    alert(`No registered students found in ${cSemester} ${cDept} Div ${cDiv}. Please register students first!`);
+                    statusSpinner.style.display = 'none';
+                    return;
+                }
+
+                // Initialize attendance dictionary (all Absent initially)
+                attendanceLog = {};
+                const today = new Date().toISOString().split('T')[0];
+                allStudents.forEach(s => {
+                    attendanceLog[s.roll_no] = {
+                        name: s.name,
+                        date: today,
+                        status: 'Absent',
+                        method: 'None'
+                    };
+                });
+
+                // Update UI headers
+                sessionTitle.innerText = `${cSubject}`;
+                sessionSubtitle.innerText = `${cSemester} • Dept of ${cDept} • Div ${cDiv} (${allStudents.length} Students)`;
+                setupDiv.style.display = 'none';
+                sessionWorkspace.classList.remove('hidden');
+                statsBadge.classList.remove('hidden');
+
+                updateStats();
+                renderRosterTable();
+
+                addLog(`Loaded class session with ${allStudents.length} registered students.`, "INFO");
+
+                // Start AI Face Scanner by default
+                await startFaceMode();
+
+            } catch(e) {
+                alert("Error starting class session: " + e.message);
+            } finally {
+                statusSpinner.style.display = 'none';
+            }
+        });
+
+        // Mark student helper function (shared by Face, Barcode, Manual)
+        function markStudent(roll_no, status = 'Present', method = 'Manual') {
+            if(!attendanceLog[roll_no]) {
+                const student = allStudents.find(s => s.roll_no === roll_no);
+                if(!student) return false;
+                attendanceLog[roll_no] = {
+                    name: student.name,
+                    date: new Date().toISOString().split('T')[0],
+                    status: status,
+                    method: method
+                };
+            }
+
+            const current = attendanceLog[roll_no];
+            const wasPresent = current.status === 'Present';
+            current.status = status;
+            current.method = method;
+
+            if(!wasPresent && status === 'Present') {
+                playChime(true);
+                addLog(`Marked Present: ${current.name} (${roll_no}) via ${method}`, method.toUpperCase());
+            }
+
+            updateStats();
+            updateRosterRow(roll_no);
+            return true;
+        }
+
+        function updateStats() {
+            const rolls = Object.keys(attendanceLog);
+            const total = rolls.length;
+            const present = rolls.filter(r => attendanceLog[r].status === 'Present').length;
+            const absent = rolls.filter(r => attendanceLog[r].status === 'Absent').length;
+            const late = rolls.filter(r => attendanceLog[r].status === 'Late').length;
+
+            badgePresentCount.innerText = present;
+            badgeTotalCount.innerText = total;
+            finalStats.innerText = `${total} Total • ${present} Present (${total > 0 ? Math.round((present/total)*100) : 0}%) • ${absent} Absent • ${late} Late`;
+        }
+
+        // ==================== MODE 1: AI FACE RECOGNITION ====================
+        const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
+
+        async function startFaceMode() {
+            statusText.innerText = "Initializing Face Biometrics AI Engine...";
+            statusSpinner.style.display = 'inline-block';
+
+            try {
+                if(!faceapi.nets.ssdMobilenetv1.isLoaded) {
+                    await Promise.all([
+                        faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+                        faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                        faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+                    ]);
+                }
+
+                const studentsWithFace = allStudents.filter(s => s.has_face && s.face_encoding);
+                if(studentsWithFace.length === 0) {
+                    addLog("Warning: No students in this class have registered face vectors yet. Use Barcode or Manual mode.", "ERR");
+                    statusText.innerText = "Notice: No face encodings enrolled for this class. Use Barcode or Manual Roster tabs.";
+                } else {
+                    const labeledDescriptors = studentsWithFace.map(s => {
+                        return new faceapi.LabeledFaceDescriptors(`${s.roll_no}::${s.name}`, [new Float32Array(s.face_encoding)]);
+                    });
+                    faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, matchThreshold);
+                    addLog(`Biometric matcher armed with ${studentsWithFace.length} student faces.`, "INFO");
+                    statusText.innerText = "Biometrics ready. Hold face in camera view.";
+                }
+
+                await startCameraStream();
+                faceDetectionRunning = true;
+                detectLoop();
+
+            } catch(e) {
+                statusText.innerText = "Camera / AI Error: " + e.message;
+                addLog("AI Camera error: " + e.message, "ERR");
+            } finally {
+                statusSpinner.style.display = 'none';
+            }
+        }
+
+        async function startCameraStream() {
+            if(currentStream) {
+                currentStream.getTracks().forEach(t => t.stop());
+            }
+            currentStream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: currentFacingMode,
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                }
+            });
             video.srcObject = currentStream;
-            
-            // Mirror video if using front camera (user)
+
             if(currentFacingMode === 'environment') {
                 video.classList.add('env-facing');
             } else {
                 video.classList.remove('env-facing');
             }
+
+            await new Promise((resolve) => {
+                video.onloadedmetadata = () => {
+                    video.play();
+                    overlay.width = video.videoWidth || 640;
+                    overlay.height = video.videoHeight || 480;
+                    resolve();
+                };
+            });
         }
 
-        switchCameraBtn.addEventListener('click', () => {
+        switchCameraBtn.addEventListener('click', async () => {
             currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
-            startVideoStream();
-            addTerminalLog(`Switched to ${currentFacingMode} camera.`, "INFO");
+            await startCameraStream();
+            addLog(`Switched camera to ${currentFacingMode} mode.`, "INFO");
         });
 
-        startBtn.addEventListener('click', () => {
-            cSemester = selSemester.value;
-            cDept = document.getElementById('selDept').value;
-            cDiv = document.getElementById('selDiv').value;
-            cSubject = selSubject.value;
+        async function detectLoop() {
+            if(!faceDetectionRunning || video.paused || video.ended) return;
 
-            if(!cSemester || !cDept || !cDiv || !cSubject) {
-                alert("Please select all class details, including a valid subject."); return;
+            try {
+                // Use SSD with lower confidence threshold for reliable detection in low light
+                const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.30, maxResults: 10 });
+                const detections = await faceapi.detectAllFaces(video, options)
+                    .withFaceLandmarks()
+                    .withFaceDescriptors();
+
+                const displaySize = { width: video.videoWidth, height: video.videoHeight };
+                faceapi.matchDimensions(overlay, displaySize);
+                const resizedDetections = faceapi.resizeResults(detections, displaySize);
+
+                const ctx = overlay.getContext('2d');
+                ctx.clearRect(0, 0, overlay.width, overlay.height);
+
+                if(faceMatcher && resizedDetections.length > 0) {
+                    const results = resizedDetections.map(d => faceMatcher.findBestMatch(d.descriptor));
+
+                    results.forEach((result, i) => {
+                        const box = resizedDetections[i].detection.box;
+                        let text = result.label;
+                        let color = 'rgba(0, 240, 255, 1)';
+                        let bgColor = 'rgba(7, 10, 17, 0.85)';
+
+                        if (result.label !== 'unknown') {
+                            const [roll, name] = result.label.split('::');
+                            text = `${name} (${roll})`;
+                            color = 'rgba(16, 185, 129, 1)';
+                            markStudent(roll, 'Present', 'Face');
+                        } else {
+                            color = 'rgba(239, 68, 68, 1)';
+                            text = 'Unrecognized Face';
+                        }
+
+                        // Mirror coordinates if front camera
+                        let drawBoxObject = box;
+                        if (currentFacingMode !== 'environment') {
+                            const newX = overlay.width - (box.x + box.width);
+                            drawBoxObject = new faceapi.Rect(newX, box.y, box.width, box.height);
+                        }
+
+                        const drawBox = new faceapi.draw.DrawBox(drawBoxObject, {
+                            label: text,
+                            lineWidth: 2,
+                            boxColor: color,
+                            drawLabelOptions: {
+                                anchorPosition: 'TOP_RIGHT',
+                                backgroundColor: bgColor,
+                                fontColor: color,
+                                fontSize: 14,
+                                padding: 4
+                            }
+                        });
+                        drawBox.draw(overlay);
+                    });
+                }
+            } catch(err) {
+                // continue loop on frame error
             }
 
-            setupDiv.style.display = 'none';
-            statusDiv.style.display = 'block';
-            videoContainer.style.display = 'block';
-            stopBtn.style.display = 'flex';
-            switchCameraBtn.style.display = 'flex';
-            logCard.style.display = 'flex';
-            document.getElementById('displaySubject').innerText = `SUBJECT: ${cSubject}`;
+            if(faceDetectionRunning) {
+                requestAnimationFrame(detectLoop);
+            }
+        }
+
+        function stopFaceMode() {
+            faceDetectionRunning = false;
+            if(currentStream) {
+                currentStream.getTracks().forEach(t => t.stop());
+                currentStream = null;
+            }
+            if(overlay) {
+                const ctx = overlay.getContext('2d');
+                ctx.clearRect(0, 0, overlay.width, overlay.height);
+            }
+        }
+
+        // ==================== MODE 2: ID CARD BARCODE & QR SCANNER ====================
+        async function startBarcodeMode() {
+            statusText.innerText = "Barcode & QR Scanner Active. Align ID card barcode in frame.";
             
-            init();
+            try {
+                if(!html5QrScanner) {
+                    html5QrScanner = new Html5Qrcode("barcodeReader");
+                }
+
+                barcodeActive = true;
+                const config = {
+                    fps: 15,
+                    qrbox: { width: 320, height: 200 },
+                    aspectRatio: 1.6
+                };
+
+                await html5QrScanner.start(
+                    { facingMode: "environment" },
+                    config,
+                    (decodedText, decodedResult) => {
+                        handleBarcodeDetected(decodedText.trim());
+                    },
+                    (errorMessage) => {
+                        // ignore scan search misses
+                    }
+                );
+                addLog("Camera barcode/QR reader initialized.", "INFO");
+
+            } catch(e) {
+                // If back camera failed, try user camera
+                try {
+                    await html5QrScanner.start(
+                        { facingMode: "user" },
+                        { fps: 15, qrbox: { width: 300, height: 200 } },
+                        (decodedText) => handleBarcodeDetected(decodedText.trim()),
+                        () => {}
+                    );
+                } catch(err2) {
+                    statusText.innerText = "Barcode camera initialization failed: " + err2.message;
+                    addLog("Barcode scanner camera error: " + err2.message, "ERR");
+                }
+            }
+        }
+
+        async function stopBarcodeMode() {
+            if(html5QrScanner && barcodeActive) {
+                try {
+                    await html5QrScanner.stop();
+                    barcodeActive = false;
+                } catch(e) {}
+            }
+        }
+
+        let lastScannedTime = 0;
+        function handleBarcodeDetected(rawCode) {
+            const now = Date.now();
+            if(now - lastScannedTime < 1800) return; // Debounce 1.8 seconds
+            lastScannedTime = now;
+
+            // Find matching student by Roll No or Name
+            const student = allStudents.find(s => s.roll_no.toLowerCase() === rawCode.toLowerCase() || rawCode.toLowerCase().includes(s.roll_no.toLowerCase()));
+
+            if(student) {
+                markStudent(student.roll_no, 'Present', 'Barcode');
+                lastScannedBox.innerHTML = `
+                    <div class="flex items-center gap-2 text-tertiary-fixed font-bold text-sm mb-1">
+                        <span class="material-symbols-outlined">check_circle</span>
+                        <span>VERIFIED & MARKED</span>
+                    </div>
+                    <div class="text-on-surface font-headline-sm font-bold text-base">${student.name}</div>
+                    <div class="text-outline text-xs font-mono-code-sm">Roll No: ${student.roll_no}</div>
+                    <div class="mt-2 text-[11px] bg-tertiary-container/10 text-tertiary-fixed px-2 py-0.5 rounded border border-tertiary-container/30">
+                        Method: Barcode / QR Card
+                    </div>
+                `;
+            } else {
+                playChime(false);
+                addLog(`Unknown barcode scanned: "${rawCode}" (Not in current class)`, "ERR");
+                lastScannedBox.innerHTML = `
+                    <div class="flex items-center gap-2 text-error font-bold text-sm mb-1">
+                        <span class="material-symbols-outlined">error</span>
+                        <span>NOT IN THIS CLASS</span>
+                    </div>
+                    <div class="text-outline text-xs font-mono-code-sm">Scanned Code: ${rawCode}</div>
+                `;
+            }
+        }
+
+        // Manual USB / Handheld Barcode Input
+        submitBarcodeBtn.addEventListener('click', () => {
+            const val = manualBarcodeInput.value.trim();
+            if(val) {
+                handleBarcodeDetected(val);
+                manualBarcodeInput.value = '';
+                manualBarcodeInput.focus();
+            }
+        });
+        manualBarcodeInput.addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') {
+                submitBarcodeBtn.click();
+            }
         });
 
-        async function init() {
-            try {
-                statusDiv.innerText = `Fetching students for ${cSemester}-${cDept}-${cDiv}...`;
-                const res = await fetch(`/api/students/${cSemester}/${cDept}/${cDiv}`);
-                knownStudents = await res.json();
-                
-                if(knownStudents.length === 0) {
-                    statusDiv.innerText = "Error: No registered students found in this class.";
-                    statusDiv.className = "mb-space-md bg-error-container/20 border border-error text-error font-mono-code-sm text-mono-code-sm p-space-sm rounded-DEFAULT text-center";
+        // ==================== MODE 3: MANUAL ATTENDANCE ROSTER ====================
+        function renderRosterTable(filter = "") {
+            rosterTableBody.innerHTML = '';
+            const query = filter.toLowerCase().trim();
+
+            allStudents.forEach(s => {
+                if(query && !s.roll_no.toLowerCase().includes(query) && !s.name.toLowerCase().includes(query)) {
                     return;
                 }
 
-                statusDiv.innerText = "Loading AI models...";
-                await Promise.all([
-                    faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
-                    faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-                    faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
-                ]);
+                const current = attendanceLog[s.roll_no] || { status: 'Absent', method: 'None' };
+                const tr = document.createElement('tr');
+                tr.id = `roster-row-${s.roll_no}`;
+                tr.className = "hover:bg-surface-container transition-colors";
 
-                addTerminalLog(`Loaded ${knownStudents.length} students into memory.`, "INFO");
-
-                const labeledDescriptors = knownStudents.map(student => {
-                    const descArray = new Float32Array(student.face_encoding);
-                    return new faceapi.LabeledFaceDescriptors(`${student.roll_no}::${student.name}`, [descArray]);
-                });
-                faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.45); // threshold
-
-                statusDiv.innerText = "Starting camera...";
-                await startVideoStream();
-
-                video.onplay = () => {
-                    statusDiv.innerText = "Scanner active. Please hold face in view.";
-                    statusDiv.className = "mb-space-md bg-tertiary-container/10 border border-tertiary-container/50 text-tertiary-fixed font-mono-code-sm text-mono-code-sm p-space-sm rounded-DEFAULT text-center";
-                    
-                    overlay.width = video.videoWidth;
-                    overlay.height = video.videoHeight;
-                    
-                    const today = new Date().toISOString().split('T')[0];
-                    knownStudents.forEach(s => {
-                        attendanceLog[s.roll_no] = { name: s.name, date: today, status: 'Absent' };
-                    });
-                    addTerminalLog("Camera active. Ready.", "INFO");
-                    detectLoop();
-                };
-
-            } catch(e) {
-                statusDiv.innerText = "Error: " + e.message;
-            }
-        }
-
-        async function detectLoop() {
-            if(!running || video.paused || video.ended) return;
-
-            const detections = await faceapi.detectAllFaces(video)
-                .withFaceLandmarks()
-                .withFaceDescriptors();
-            
-            const displaySize = { width: video.videoWidth, height: video.videoHeight };
-            faceapi.matchDimensions(overlay, displaySize);
-            const resizedDetections = faceapi.resizeResults(detections, displaySize);
-            
-            const ctx = overlay.getContext('2d');
-            ctx.clearRect(0, 0, overlay.width, overlay.height);
-
-            const results = resizedDetections.map(d => faceMatcher.findBestMatch(d.descriptor));
-
-            results.forEach((result, i) => {
-                const box = resizedDetections[i].detection.box;
-                let text = result.label;
-                let color = 'rgba(0, 240, 255, 1)'; 
-                let bgColor = 'rgba(7, 10, 17, 0.85)';
-                
-                if (result.label !== 'unknown') {
-                    const [roll, name] = result.label.split('::');
-                    text = name;
-                    
-                    if(attendanceLog[roll].status !== 'Present') {
-                        attendanceLog[roll].status = 'Present';
-                        addTerminalLog(`Present: ${name} (ID: ${roll})`, "ALERT");
-                    }
-                } else {
-                    color = 'rgba(239, 68, 68, 1)'; 
-                    text = 'Unrecognized';
+                let statusBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold status-pill-absent">ABSENT</span>`;
+                if(current.status === 'Present') {
+                    statusBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold status-pill-present">PRESENT (${current.method || 'Manual'})</span>`;
+                } else if(current.status === 'Late') {
+                    statusBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold status-pill-late">LATE</span>`;
                 }
 
-                // If camera is mirrored, flip the box X coordinates to match the screen
-                let drawBoxObject = box;
-                if (currentFacingMode !== 'environment') {
-                    // mirror box
-                    const newX = overlay.width - (box.x + box.width);
-                    drawBoxObject = new faceapi.Rect(newX, box.y, box.width, box.height);
-                }
-
-                const drawBox = new faceapi.draw.DrawBox(drawBoxObject, { 
-                    label: text,
-                    lineWidth: 2,
-                    boxColor: color,
-                    drawLabelOptions: {
-                        anchorPosition: 'TOP_RIGHT',
-                        backgroundColor: bgColor,
-                        fontColor: color,
-                        fontSize: 16,
-                        padding: 4
-                    }
-                });
-                drawBox.draw(overlay);
+                tr.innerHTML = `
+                    <td class="py-2.5 px-4 font-bold text-on-surface">${s.roll_no}</td>
+                    <td class="py-2.5 px-4 text-on-surface-variant">${s.name}</td>
+                    <td class="py-2.5 px-4">
+                        ${s.has_face 
+                            ? '<span class="text-tertiary-fixed text-[11px] flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>Enrolled</span>' 
+                            : '<span class="text-outline text-[11px]">No Face Vector</span>'}
+                    </td>
+                    <td class="py-2.5 px-4 text-center status-col">${statusBadge}</td>
+                    <td class="py-2.5 px-4 text-right">
+                        <div class="inline-flex gap-1">
+                            <button onclick="markStudent('${s.roll_no}', 'Present', 'Manual')" class="px-2.5 py-1 bg-emerald-500/20 hover:bg-emerald-500 hover:text-white text-emerald-300 rounded border border-emerald-500/50 text-[11px] transition-all">Present</button>
+                            <button onclick="markStudent('${s.roll_no}', 'Late', 'Manual')" class="px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500 hover:text-white text-amber-300 rounded border border-amber-500/50 text-[11px] transition-all">Late</button>
+                            <button onclick="markStudent('${s.roll_no}', 'Absent', 'Manual')" class="px-2.5 py-1 bg-rose-500/20 hover:bg-rose-500 hover:text-white text-rose-300 rounded border border-rose-500/50 text-[11px] transition-all">Absent</button>
+                        </div>
+                    </td>
+                `;
+                rosterTableBody.appendChild(tr);
             });
-
-            requestAnimationFrame(detectLoop);
         }
 
-        stopBtn.addEventListener('click', async () => {
-            running = false;
-            if (currentStream) {
-                currentStream.getTracks().forEach(track => track.stop());
+        function updateRosterRow(roll_no) {
+            const row = document.getElementById(`roster-row-${roll_no}`);
+            if(!row) return;
+            const current = attendanceLog[roll_no];
+            const statusCol = row.querySelector('.status-col');
+            if(statusCol && current) {
+                if(current.status === 'Present') {
+                    statusCol.innerHTML = `<span class="px-2 py-0.5 rounded text-[11px] font-bold status-pill-present">PRESENT (${current.method || 'Manual'})</span>`;
+                } else if(current.status === 'Late') {
+                    statusCol.innerHTML = `<span class="px-2 py-0.5 rounded text-[11px] font-bold status-pill-late">LATE</span>`;
+                } else {
+                    statusCol.innerHTML = `<span class="px-2 py-0.5 rounded text-[11px] font-bold status-pill-absent">ABSENT</span>`;
+                }
             }
-            stopBtn.disabled = true;
-            statusDiv.innerText = "Saving attendance to database...";
-            addTerminalLog("Stopping camera and saving...", "INFO");
+        }
+
+        rosterSearch.addEventListener('input', (e) => {
+            renderRosterTable(e.target.value);
+        });
+
+        markAllPresentBtn.addEventListener('click', () => {
+            allStudents.forEach(s => {
+                attendanceLog[s.roll_no].status = 'Present';
+                attendanceLog[s.roll_no].method = 'Manual';
+            });
+            updateStats();
+            renderRosterTable(rosterSearch.value);
+            addLog("Teacher marked all students as Present.", "MANUAL");
+        });
+
+        markAllAbsentBtn.addEventListener('click', () => {
+            allStudents.forEach(s => {
+                attendanceLog[s.roll_no].status = 'Absent';
+                attendanceLog[s.roll_no].method = 'Manual';
+            });
+            updateStats();
+            renderRosterTable(rosterSearch.value);
+            addLog("Teacher reset all students to Absent.", "MANUAL");
+        });
+
+        // ==================== TAB SWITCHING LOGIC ====================
+        tabFace.addEventListener('click', async () => {
+            switchTab('face');
+        });
+        tabBarcode.addEventListener('click', async () => {
+            switchTab('barcode');
+        });
+        tabManual.addEventListener('click', async () => {
+            switchTab('manual');
+        });
+
+        async function switchTab(tab) {
+            [tabFace, tabBarcode, tabManual].forEach(t => t.classList.remove('active'));
+            viewFace.classList.add('hidden');
+            viewBarcode.classList.add('hidden');
+            viewManual.classList.add('hidden');
+
+            if(tab === 'face') {
+                tabFace.classList.add('active');
+                viewFace.classList.remove('hidden');
+                await stopBarcodeMode();
+                await startFaceMode();
+            } else if(tab === 'barcode') {
+                tabBarcode.classList.add('active');
+                viewBarcode.classList.remove('hidden');
+                stopFaceMode();
+                await startBarcodeMode();
+            } else if(tab === 'manual') {
+                tabManual.classList.add('active');
+                viewManual.classList.remove('hidden');
+                stopFaceMode();
+                await stopBarcodeMode();
+                renderRosterTable(rosterSearch.value);
+                statusText.innerText = "Manual Roster view. Click student status to update.";
+            }
+        }
+
+        // ==================== SAVE ATTENDANCE ====================
+        saveAttendanceBtn.addEventListener('click', async () => {
+            const rolls = Object.keys(attendanceLog);
+            const presentCount = rolls.filter(r => attendanceLog[r].status === 'Present').length;
+
+            if(!confirm(`Finalize and save attendance for ${cSubject}?\n\nPresent: ${presentCount} / ${rolls.length} students`)) {
+                return;
+            }
+
+            statusSpinner.style.display = 'inline-block';
+            statusText.innerText = "Syncing class records with database...";
+            addLog("Initiating cloud database synchronization...", "INFO");
 
             const now = new Date();
-            const timeStr = now.getHours().toString().padStart(2, '0') + ":" + 
-                            now.getMinutes().toString().padStart(2, '0') + ":" + 
-                            now.getSeconds().toString().padStart(2, '0');
+            const timeStr = now.toTimeString().split(' ')[0];
 
-            const records = Object.keys(attendanceLog).map(roll_no => {
-                return { 
-                    roll_no: roll_no, date: attendanceLog[roll_no].date, time: timeStr,
-                    subject: cSubject, semester: cSemester, dept: cDept, div: cDiv,
-                    status: attendanceLog[roll_no].status 
+            const records = rolls.map(roll_no => {
+                return {
+                    roll_no: roll_no,
+                    date: attendanceLog[roll_no].date,
+                    time: timeStr,
+                    subject: cSubject,
+                    semester: cSemester,
+                    dept: cDept,
+                    div: cDiv,
+                    status: attendanceLog[roll_no].status
                 };
             });
 
@@ -377,13 +970,28 @@
                     body: JSON.stringify(records)
                 });
                 const result = await response.json();
+
                 if(result.status === 'success') {
-                    statusDiv.innerText = "Success: Attendance saved. You can return to Dashboard.";
-                    alert("Attendance successfully saved to the cloud!");
-                    addTerminalLog("SAVE SUCCESSFUL.", "INFO");
+                    stopFaceMode();
+                    await stopBarcodeMode();
+                    alert(`✅ Attendance successfully saved to database!\n\nSubject: ${cSubject}\nTotal: ${records.length}\nPresent: ${presentCount}`);
+                    window.location.href = "/teacher/dashboard";
+                } else {
+                    alert("Error saving: " + (result.message || "Failed to commit records."));
                 }
             } catch(e) {
-                statusDiv.innerText = "Error saving attendance: " + e.message;
+                alert("Network error saving attendance: " + e.message);
+                addLog("Error syncing attendance: " + e.message, "ERR");
+            } finally {
+                statusSpinner.style.display = 'none';
+            }
+        });
+
+        resetSessionBtn.addEventListener('click', () => {
+            if(confirm("Are you sure you want to discard this class session?")) {
+                stopFaceMode();
+                stopBarcodeMode();
+                location.reload();
             }
         });
     </script>

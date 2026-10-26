@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Student Database - Attendance Hub</title>
+    <title>Student Database & Face Enrollment - Attendance Hub</title>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com" rel="preconnect"/>
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
@@ -13,59 +13,91 @@
     <script id="tailwind-config">
         tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "on-tertiary-container": "#006d4a", "on-secondary": "#4a007f", "secondary": "#deb7ff", "error": "#ffb4ab", "primary": "#dbfcff", "inverse-surface": "#dae2fd", "surface-container-lowest": "#060e20", "on-secondary-container": "#d4a5ff", "on-background": "#dae2fd", "surface-container-highest": "#2d3449", "background": "#0b1326", "inverse-primary": "#006970", "on-secondary-fixed-variant": "#680eac", "tertiary-fixed": "#6ffbbe", "surface-container-high": "#222a3d", "surface-container-low": "#131b2e", "on-primary-fixed-variant": "#004f54", "secondary-fixed": "#f1dbff", "surface-dim": "#0b1326", "on-primary": "#00363a", "primary-fixed": "#7df4ff", "on-error": "#690005", "on-surface": "#dae2fd", "surface-tint": "#00dbe9", "tertiary": "#d8ffe7", "on-tertiary-fixed": "#002113", "on-tertiary-fixed-variant": "#005236", "surface-container": "#171f33", "on-primary-container": "#006970", "on-secondary-fixed": "#2d0050", "surface-variant": "#2d3449", "surface-bright": "#31394d", "on-primary-fixed": "#002022", "secondary-container": "#6b13af", "on-tertiary": "#003824", "tertiary-container": "#65f2b5", "surface": "#0b1326", "primary-container": "#00f0ff", "tertiary-fixed-dim": "#4edea3", "on-surface-variant": "#b9cacb", "on-error-container": "#ffdad6", "inverse-on-surface": "#283044", "secondary-fixed-dim": "#deb7ff", "outline-variant": "#3b494b", "primary-fixed-dim": "#00dbe9", "outline": "#849495", "error-container": "#93000a" } } } };
     </script>
-    <script>
-        function openEditModal(id, roll_no, name, semester, dept, div) {
-            document.getElementById('editId').value = id;
-            document.getElementById('editRollNo').value = roll_no;
-            document.getElementById('editName').value = name;
-            document.getElementById('editSemester').value = semester;
-            document.getElementById('editDept').value = dept;
-            document.getElementById('editDiv').value = div;
-            document.getElementById('editModal').style.display = 'flex';
-        }
-        function closeEditModal() {
-            document.getElementById('editModal').style.display = 'none';
-        }
-    </script>
+    <!-- Face API to convert uploaded photos directly to biometric embeddings -->
+    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
 </head>
 <body class="bg-background font-body-md text-on-surface antialiased relative">
     
-    <!-- Edit Modal -->
-    <div id="editModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-space-lg">
-        <div class="bg-surface-container-low border border-surface-container-highest rounded-xl shadow-2xl p-space-lg w-full max-w-md">
-            <div class="flex items-center justify-between mb-space-md border-b border-surface-container-highest pb-space-sm">
-                <h3 class="font-headline-sm text-headline-sm text-primary">Edit Student Profile</h3>
+    <!-- Edit Student Profile Modal -->
+    <div id="editModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+        <div class="bg-surface-container-low border border-surface-container-highest rounded-xl shadow-2xl p-6 w-full max-w-md">
+            <div class="flex items-center justify-between mb-4 border-b border-surface-container-highest pb-3">
+                <h3 class="font-headline-sm text-base text-primary font-bold">Edit Student Profile</h3>
                 <button onclick="closeEditModal()" class="text-outline hover:text-white"><span class="material-symbols-outlined">close</span></button>
             </div>
-            <form method="POST" action="/teacher/database/update" class="space-y-space-md">
+            <form method="POST" action="/teacher/database/update" class="space-y-4">
                 <input type="hidden" name="id" id="editId">
-                <div class="flex flex-col gap-1 font-mono-code-sm">
-                    <label class="text-label-caps text-outline">Roll Number</label>
-                    <input type="text" name="roll_no" id="editRollNo" required class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-2 focus:border-primary-container focus:outline-none focus:shadow-[inset_0_0_4px_rgba(0,240,255,0.2)]">
+                <div class="flex flex-col gap-1 font-mono-code-sm text-xs">
+                    <label class="text-outline uppercase font-semibold">Roll Number</label>
+                    <input type="text" name="roll_no" id="editRollNo" required class="bg-surface-container text-on-surface border border-surface-container-highest rounded-lg px-3 py-2 focus:border-primary-container focus:outline-none">
                 </div>
-                <div class="flex flex-col gap-1 font-mono-code-sm">
-                    <label class="text-label-caps text-outline">Name</label>
-                    <input type="text" name="name" id="editName" required class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-2 focus:border-primary-container focus:outline-none">
+                <div class="flex flex-col gap-1 font-mono-code-sm text-xs">
+                    <label class="text-outline uppercase font-semibold">Full Name</label>
+                    <input type="text" name="name" id="editName" required class="bg-surface-container text-on-surface border border-surface-container-highest rounded-lg px-3 py-2 focus:border-primary-container focus:outline-none">
                 </div>
                 <div class="grid grid-cols-3 gap-2">
-                    <div class="flex flex-col gap-1 font-mono-code-sm">
-                        <label class="text-label-caps text-outline">Sem</label>
-                        <input type="text" name="semester" id="editSemester" required class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-2 focus:border-primary-container focus:outline-none">
+                    <div class="flex flex-col gap-1 font-mono-code-sm text-xs">
+                        <label class="text-outline uppercase font-semibold">Sem</label>
+                        <input type="text" name="semester" id="editSemester" required class="bg-surface-container text-on-surface border border-surface-container-highest rounded-lg px-3 py-2 focus:border-primary-container focus:outline-none">
                     </div>
-                    <div class="flex flex-col gap-1 font-mono-code-sm">
-                        <label class="text-label-caps text-outline">Dept</label>
-                        <input type="text" name="dept" id="editDept" required class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-2 focus:border-primary-container focus:outline-none">
+                    <div class="flex flex-col gap-1 font-mono-code-sm text-xs">
+                        <label class="text-outline uppercase font-semibold">Dept</label>
+                        <input type="text" name="dept" id="editDept" required class="bg-surface-container text-on-surface border border-surface-container-highest rounded-lg px-3 py-2 focus:border-primary-container focus:outline-none">
                     </div>
-                    <div class="flex flex-col gap-1 font-mono-code-sm">
-                        <label class="text-label-caps text-outline">Div</label>
-                        <input type="text" name="div" id="editDiv" required class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-2 focus:border-primary-container focus:outline-none">
+                    <div class="flex flex-col gap-1 font-mono-code-sm text-xs">
+                        <label class="text-outline uppercase font-semibold">Div</label>
+                        <input type="text" name="div" id="editDiv" required class="bg-surface-container text-on-surface border border-surface-container-highest rounded-lg px-3 py-2 focus:border-primary-container focus:outline-none">
                     </div>
                 </div>
-                <div class="bg-error-container/10 border border-error/50 p-2 rounded-DEFAULT mt-2 text-error font-mono-code-sm text-mono-code-sm flex items-center gap-2">
-                    <span class="material-symbols-outlined text-sm">warning</span> All changes are permanently audited.
-                </div>
-                <button type="submit" class="w-full bg-primary-container/10 border border-primary-container text-primary-fixed hover:bg-primary-container hover:text-on-primary-container font-headline-sm text-mono-code-sm py-space-sm rounded-DEFAULT transition-all">Save Changes</button>
+                <button type="submit" class="w-full bg-primary-container text-on-primary-container font-headline-sm font-bold text-xs py-2.5 rounded-lg transition-all hover:opacity-95">Save Changes</button>
             </form>
+        </div>
+    </div>
+
+    <!-- Upload Photo Face Enrollment Modal -->
+    <div id="photoEnrollModal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-md z-[110] flex items-center justify-center p-4">
+        <div class="bg-surface-container-low border border-primary-container/40 rounded-xl shadow-2xl p-6 w-full max-w-lg space-y-4">
+            <div class="flex items-center justify-between border-b border-surface-container-highest pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary-fixed text-2xl">add_a_photo</span>
+                    <div>
+                        <h3 class="font-headline-sm text-base text-primary font-bold">Enroll Face from Photo / Selfie</h3>
+                        <p class="text-xs font-mono-code-sm text-outline" id="enrollStudentInfo">Select student photo</p>
+                    </div>
+                </div>
+                <button onclick="closePhotoEnrollModal()" class="text-outline hover:text-white"><span class="material-symbols-outlined">close</span></button>
+            </div>
+
+            <!-- Upload Box -->
+            <div class="flex flex-col gap-3">
+                <label class="border-2 border-dashed border-surface-container-highest hover:border-primary-container rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition-colors bg-surface-container-lowest/50">
+                    <span class="material-symbols-outlined text-primary-fixed text-4xl mb-1">cloud_upload</span>
+                    <span class="font-headline-sm text-xs font-bold text-on-surface">Click or Drag & Drop Student Photo</span>
+                    <span class="text-[11px] font-mono-code-sm text-outline mt-1">Supports JPG, PNG, WEBP (Selfie / Passport size)</span>
+                    <input type="file" id="photoFileInput" accept="image/*" class="hidden">
+                </label>
+
+                <!-- Photo Preview & Face Analysis Box -->
+                <div id="previewContainer" class="hidden relative rounded-lg overflow-hidden border border-surface-container-highest bg-black flex justify-center items-center min-h-[220px]">
+                    <img id="sourceImage" class="max-h-[300px] w-auto max-w-full object-contain" alt="Uploaded face preview">
+                    <canvas id="photoCanvas" class="absolute top-0 left-0 w-full h-full pointer-events-none"></canvas>
+                </div>
+
+                <!-- Status Feedback -->
+                <div id="enrollStatus" class="font-mono-code-sm text-xs p-2.5 rounded-lg bg-surface-container text-outline text-center">
+                    Select an image file to begin facial embedding extraction.
+                </div>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="closePhotoEnrollModal()" class="flex-1 px-4 py-2 rounded-lg border border-surface-container-highest text-xs font-mono-code-sm text-outline hover:text-white">
+                    Cancel
+                </button>
+                <button id="saveBiometricsBtn" disabled class="flex-1 flex items-center justify-center gap-1.5 bg-primary-container text-on-primary-container font-headline-sm font-bold text-xs py-2 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-95 transition-all">
+                    <span class="material-symbols-outlined text-sm">fingerprint</span>
+                    <span>SAVE BIOMETRICS TO DB</span>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -105,7 +137,7 @@
                     <span class="material-symbols-outlined text-tertiary-fixed text-lg">group</span>
                     <div class="flex flex-col">
                         <span class="leading-none">Student DB</span>
-                        <span class="font-label-caps text-label-caps text-outline leading-none mt-1">EDIT PROFILES</span>
+                        <span class="font-label-caps text-label-caps text-outline leading-none mt-1">EDIT & ENROLL FACES</span>
                     </div>
                 </a>
                 <a href="/teacher/reports" class="flex items-center gap-space-sm px-space-sm py-space-sm rounded-DEFAULT text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-body-md text-body-md">
@@ -166,54 +198,71 @@
 
     <!-- MAIN CONTENT -->
     <main class="relative pt-14 pl-72 w-full bg-background min-h-screen">
-        <div class="p-space-lg space-y-space-lg w-full max-w-[1200px] mx-auto">
+        <div class="p-6 space-y-6 w-full max-w-[1300px] mx-auto">
             
-            <div class="bg-surface-container-low rounded-xl p-space-lg shadow-xl border border-surface-container-highest">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-space-lg mb-space-md border-b border-surface-container-highest pb-space-sm">
-                    <div class="space-y-space-xs">
-                        <div class="flex items-center gap-space-sm">
-                            <span class="material-symbols-outlined text-tertiary-fixed text-xl">group</span>
-                            <h1 class="font-headline-lg text-headline-lg text-primary tracking-tight">Student Database</h1>
+            <div class="bg-surface-container-low rounded-xl p-6 shadow-xl border border-surface-container-highest space-y-4">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-surface-container-highest pb-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-tertiary-fixed text-2xl">group</span>
+                            <h1 class="font-headline-lg text-xl text-primary font-bold">Student Database & Biometric Enrollment</h1>
                         </div>
-                        <p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
-                            Manually edit student profiles. All changes are logged securely.
+                        <p class="font-body-md text-xs text-on-surface-variant mt-1">
+                            Upload photos or selfies to extract face embeddings into the database without needing students present.
                         </p>
+                    </div>
+
+                    <!-- Search Input -->
+                    <div class="flex items-center gap-2 w-full md:w-72">
+                        <input type="text" id="dbSearch" placeholder="Search roll no or name..." class="w-full bg-surface-container text-on-surface border border-surface-container-highest rounded-lg px-3 py-2 text-xs font-mono-code-sm focus:border-primary focus:outline-none">
                     </div>
                 </div>
 
                 <div class="overflow-x-auto rounded-lg border border-surface-container-highest">
-                    <table class="w-full text-left font-mono-code-sm text-mono-code-sm">
-                        <thead class="bg-surface-container-lowest text-outline font-label-caps text-label-caps uppercase">
+                    <table class="w-full text-left font-mono-code-sm text-xs">
+                        <thead class="bg-surface-container-lowest text-outline font-semibold uppercase">
                             <tr>
-                                <th class="py-space-xs px-space-sm">Roll No</th>
-                                <th class="py-space-xs px-space-sm">Name</th>
-                                <th class="py-space-xs px-space-sm">Class Details</th>
-                                <th class="py-space-xs px-space-sm">Biometric</th>
-                                <th class="py-space-xs px-space-sm text-right">Action</th>
+                                <th class="py-3 px-4">Roll No</th>
+                                <th class="py-3 px-4">Name</th>
+                                <th class="py-3 px-4">Class Details</th>
+                                <th class="py-3 px-4">Biometric Status</th>
+                                <th class="py-3 px-4 text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-surface-container-highest/50">
+                        <tbody id="studentTableBody" class="divide-y divide-surface-container-highest/40">
                             {% for s in students %}
-                            <tr class="bg-surface-container/60 hover:bg-surface-container-high transition-colors">
-                                <td class="py-space-sm px-space-sm text-on-surface">{{ s.roll_no }}</td>
-                                <td class="py-space-sm px-space-sm text-on-surface font-semibold">{{ s.name }}</td>
-                                <td class="py-space-sm px-space-sm text-outline">{{ s.semester }} | {{ s.dept }} | Div {{ s.div }}</td>
-                                <td class="py-space-sm px-space-sm">
+                            <tr class="student-row hover:bg-surface-container/60 transition-colors" data-roll="{{ s.roll_no }}" data-name="{{ s.name|lower }}">
+                                <td class="py-3 px-4 font-bold text-on-surface">{{ s.roll_no }}</td>
+                                <td class="py-3 px-4 text-on-surface font-semibold">{{ s.name }}</td>
+                                <td class="py-3 px-4 text-outline">{{ s.semester }} | {{ s.dept }} | Div {{ s.div }}</td>
+                                <td class="py-3 px-4" id="bio-cell-{{ s.roll_no }}">
                                     {% if s.face_encoding %}
-                                    <span class="text-tertiary-fixed">Registered</span>
+                                    <span class="text-tertiary-fixed font-bold flex items-center gap-1.5">
+                                        <span class="w-2 h-2 rounded-full bg-tertiary"></span>
+                                        Enrolled
+                                    </span>
                                     {% else %}
-                                    <span class="text-error">Missing</span>
+                                    <span class="text-error font-semibold flex items-center gap-1.5">
+                                        <span class="w-2 h-2 rounded-full bg-error"></span>
+                                        Missing Face
+                                    </span>
                                     {% endif %}
                                 </td>
-                                <td class="py-space-sm px-space-sm text-right">
-                                    <button onclick="openEditModal({{ s.id }}, '{{ s.roll_no }}', '{{ s.name }}', '{{ s.semester }}', '{{ s.dept }}', '{{ s.div }}')" class="px-space-xs py-1 rounded-DEFAULT bg-surface-container text-secondary-fixed hover:bg-surface-bright hover:text-secondary text-label-caps border border-surface-container-highest transition-colors">
-                                        Edit
-                                    </button>
+                                <td class="py-3 px-4 text-right">
+                                    <div class="inline-flex gap-2">
+                                        <button onclick="openPhotoEnrollModal('{{ s.roll_no }}', '{{ s.name }}')" class="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary-container/15 hover:bg-primary-container hover:text-black text-primary-fixed border border-primary-container/40 text-xs transition-all">
+                                            <span class="material-symbols-outlined text-xs">add_a_photo</span>
+                                            <span>Upload Photo</span>
+                                        </button>
+                                        <button onclick="openEditModal({{ s.id }}, '{{ s.roll_no }}', '{{ s.name }}', '{{ s.semester }}', '{{ s.dept }}', '{{ s.div }}')" class="px-2.5 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-outline hover:text-white border border-surface-container-highest text-xs transition-colors">
+                                            Edit
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                             {% endfor %}
                             {% if not students %}
-                            <tr><td colspan="5" class="text-center py-space-md text-outline font-mono-code-sm">No students found.</td></tr>
+                            <tr><td colspan="5" class="text-center py-6 text-outline">No students found in database.</td></tr>
                             {% endif %}
                         </tbody>
                     </table>
@@ -221,5 +270,181 @@
             </div>
         </div>
     </main>
+
+    <script>
+        const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
+        let activeRollNo = null;
+        let activeStudentName = null;
+        let extractedDescriptor = null;
+        let modelsLoaded = false;
+
+        // Edit Profile Modal
+        function openEditModal(id, roll_no, name, semester, dept, div) {
+            document.getElementById('editId').value = id;
+            document.getElementById('editRollNo').value = roll_no;
+            document.getElementById('editName').value = name;
+            document.getElementById('editSemester').value = semester;
+            document.getElementById('editDept').value = dept;
+            document.getElementById('editDiv').value = div;
+            document.getElementById('editModal').style.display = 'flex';
+        }
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        // Photo Face Enrollment Modal
+        const photoEnrollModal = document.getElementById('photoEnrollModal');
+        const enrollStudentInfo = document.getElementById('enrollStudentInfo');
+        const photoFileInput = document.getElementById('photoFileInput');
+        const previewContainer = document.getElementById('previewContainer');
+        const sourceImage = document.getElementById('sourceImage');
+        const photoCanvas = document.getElementById('photoCanvas');
+        const enrollStatus = document.getElementById('enrollStatus');
+        const saveBiometricsBtn = document.getElementById('saveBiometricsBtn');
+
+        function openPhotoEnrollModal(roll_no, name) {
+            activeRollNo = roll_no;
+            activeStudentName = name;
+            extractedDescriptor = null;
+            saveBiometricsBtn.disabled = true;
+            photoFileInput.value = '';
+            previewContainer.classList.add('hidden');
+            enrollStudentInfo.innerText = `Enrolling for: ${name} (Roll: ${roll_no})`;
+            enrollStatus.innerText = "Select or drop a photo of this student's face (selfie, passport, or gallery image).";
+            enrollStatus.className = "font-mono-code-sm text-xs p-2.5 rounded-lg bg-surface-container text-outline text-center";
+            photoEnrollModal.style.display = 'flex';
+        }
+
+        function closePhotoEnrollModal() {
+            photoEnrollModal.style.display = 'none';
+        }
+
+        // Load models on demand
+        async function loadModels() {
+            if(!modelsLoaded) {
+                enrollStatus.innerText = "Loading AI face detection models...";
+                await Promise.all([
+                    faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+                ]);
+                modelsLoaded = true;
+            }
+        }
+
+        // Handle Image Selection
+        photoFileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+
+            saveBiometricsBtn.disabled = true;
+            extractedDescriptor = null;
+            enrollStatus.innerText = "Reading image and extracting biometric landmarks...";
+            enrollStatus.className = "font-mono-code-sm text-xs p-2.5 rounded-lg bg-primary-container/20 text-primary-fixed text-center";
+
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                sourceImage.src = event.target.result;
+                sourceImage.onload = async () => {
+                    previewContainer.classList.remove('hidden');
+                    await loadModels();
+
+                    try {
+                        // Detect single face with relaxed confidence (0.25) so photos taken in different lighting work
+                        const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.25 });
+                        const detection = await faceapi.detectSingleFace(sourceImage, options)
+                            .withFaceLandmarks()
+                            .withFaceDescriptor();
+
+                        photoCanvas.width = sourceImage.width;
+                        photoCanvas.height = sourceImage.height;
+                        const ctx = photoCanvas.getContext('2d');
+                        ctx.clearRect(0, 0, photoCanvas.width, photoCanvas.height);
+
+                        if(!detection) {
+                            enrollStatus.innerText = "❌ No clear face detected in this photo. Please try a clearer front-facing selfie.";
+                            enrollStatus.className = "font-mono-code-sm text-xs p-2.5 rounded-lg bg-error-container/20 text-error text-center";
+                            return;
+                        }
+
+                        // Draw bounding box
+                        const box = detection.detection.box;
+                        const drawBox = new faceapi.draw.DrawBox(box, {
+                            label: `${activeStudentName} (${Math.round(detection.detection.score * 100)}% Match)`,
+                            boxColor: '#00f0ff',
+                            lineWidth: 2
+                        });
+                        drawBox.draw(photoCanvas);
+
+                        extractedDescriptor = Array.from(detection.descriptor);
+                        saveBiometricsBtn.disabled = false;
+                        enrollStatus.innerText = `✅ Face detected successfully (${Math.round(detection.detection.score * 100)}% confidence)! 128-d vector ready to commit.`;
+                        enrollStatus.className = "font-mono-code-sm text-xs p-2.5 rounded-lg bg-tertiary-container/20 text-tertiary-fixed text-center font-bold";
+
+                    } catch(err) {
+                        enrollStatus.innerText = "Error analyzing image: " + err.message;
+                        enrollStatus.className = "font-mono-code-sm text-xs p-2.5 rounded-lg bg-error-container/20 text-error text-center";
+                    }
+                };
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Save Biometrics to DB
+        saveBiometricsBtn.addEventListener('click', async () => {
+            if(!extractedDescriptor || !activeRollNo) return;
+
+            saveBiometricsBtn.disabled = true;
+            enrollStatus.innerText = "Committing biometric encoding to database...";
+
+            try {
+                const res = await fetch('/api/teacher/enroll_face', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        roll_no: activeRollNo,
+                        encoding: extractedDescriptor
+                    })
+                });
+                const data = await res.json();
+
+                if(data.status === 'success') {
+                    // Update table UI
+                    const cell = document.getElementById(`bio-cell-${activeRollNo}`);
+                    if(cell) {
+                        cell.innerHTML = `
+                            <span class="text-tertiary-fixed font-bold flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-tertiary"></span>
+                                Enrolled
+                            </span>
+                        `;
+                    }
+                    alert(`✅ Biometrics successfully enrolled for ${activeStudentName}!`);
+                    closePhotoEnrollModal();
+                } else {
+                    alert("Error saving: " + data.message);
+                }
+            } catch(e) {
+                alert("Network error: " + e.message);
+            } finally {
+                saveBiometricsBtn.disabled = false;
+            }
+        });
+
+        // Search Filter
+        const dbSearch = document.getElementById('dbSearch');
+        dbSearch.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            document.querySelectorAll('.student-row').forEach(row => {
+                const roll = row.getAttribute('data-roll').toLowerCase();
+                const name = row.getAttribute('data-name').toLowerCase();
+                if(!query || roll.includes(query) || name.includes(query)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    </script>
 </body>
 </html>
