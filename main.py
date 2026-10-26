@@ -27,11 +27,13 @@ DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./attendance_v5.db")
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-if "sqlite" in DATABASE_URL:
-    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
-else:
-    engine = create_engine(DATABASE_URL, pool_pre_ping=True, pool_recycle=300)
+def get_engine(url):
+    if "sqlite" in url:
+        return create_engine(url, connect_args={"check_same_thread": False})
+    else:
+        return create_engine(url, pool_pre_ping=True, pool_recycle=300)
 
+engine = get_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def get_db():
@@ -42,18 +44,60 @@ def get_db():
         db.close()
 
 def init_db():
+    global engine, SessionLocal
     try:
         Base.metadata.create_all(bind=engine)
+        print("Connected to primary database successfully.")
+    except Exception as e:
+        print(f"Warning: Primary database connection failed ({e}).")
+        if "sqlite" not in DATABASE_URL:
+            print("Auto-falling back to local SQLite database to prevent downtime...")
+            engine = get_engine("sqlite:///./attendance_v5.db")
+            SessionLocal.configure(bind=engine)
+            Base.metadata.create_all(bind=engine)
+
+    try:
         db = SessionLocal()
+        # Seed default faculty accounts if not existing
         if not db.query(Teacher).filter(Teacher.username=="admin").first():
-            db.add(Teacher(username="admin", name="Administrator", password="password", designation="HOD", dept="Computer"))
+            db.add(Teacher(
+                username="admin", name="Prof. Rajesh Sharma", password="password", 
+                designation="Head of Department (HOD)", dept="Computer", 
+                assigned_semester="Semester 3", assigned_div="A"
+            ))
         if not db.query(Teacher).filter(Teacher.username=="professor2").first():
-            db.add(Teacher(username="professor2", name="Prof. Sharma", password="password", designation="Assistant Professor", dept="Computer"))
+            db.add(Teacher(
+                username="professor2", name="Prof. Anjali Gupta", password="password", 
+                designation="Assistant Professor", dept="Computer", 
+                assigned_semester="Semester 3", assigned_div="B"
+            ))
+        
+        # Seed 5 demo students for instant testing
+        demo_students = [
+            ("101", "Aarav Sharma", "password", "Semester 3", "Computer", "A"),
+            ("102", "Priya Patel", "password", "Semester 3", "Computer", "A"),
+            ("103", "Rohan Verma", "password", "Semester 3", "Computer", "A"),
+            ("104", "Ananya Iyer", "password", "Semester 3", "Computer", "A"),
+            ("105", "Karan Mehta", "password", "Semester 3", "Computer", "A"),
+        ]
+        for roll, sname, spwd, sem, sdept, sdiv in demo_students:
+            if not db.query(Student).filter(Student.roll_no == roll).first():
+                db.add(Student(roll_no=roll, name=sname, password=spwd, semester=sem, dept=sdept, div=sdiv))
+
+        # Seed default subjects for admin so scanner is ready immediately
+        if not db.query(Subject).filter(Subject.teacher_username == "admin").first():
+            db.add(Subject(name="Data Structures & Algorithms", code="CS-301", semester="Semester 3", teacher_username="admin"))
+            db.add(Subject(name="Database Management Systems", code="CS-302", semester="Semester 3", teacher_username="admin"))
+            db.add(Subject(name="Computer Networks", code="CS-303", semester="Semester 3", teacher_username="admin"))
+
         db.commit()
         db.close()
-        print("Database schema verified and initial teachers seeded successfully.")
+        print("Database schema verified and sample data ready.")
     except Exception as e:
-        print(f"Database connection error during initialization: {e}")
+        print(f"Notice during seeding: {e}")
+
+# Run DB verification immediately on import and on startup
+init_db()
 
 @app.on_event("startup")
 async def startup_event():
@@ -121,6 +165,8 @@ async def teacher_dashboard(request: Request, semester: str = None, dept: str = 
         return RedirectResponse(url="/teacher/login")
     
     teacher_obj = db.query(Teacher).filter(Teacher.username == t_user).first()
+    if not teacher_obj:
+        teacher_obj = Teacher(username=t_user, name=t_user.title(), designation="Faculty", dept="Computer", assigned_semester="Semester 3", assigned_div="A")
     
     # ISOLATE DATA: Filter Records based on Hierarchy AND Teacher Username
     query = db.query(Attendance).filter(Attendance.teacher_username == t_user)
@@ -144,10 +190,13 @@ async def teacher_dashboard(request: Request, semester: str = None, dept: str = 
     subjects = [s[0] for s in subject_stats if s[0]]
     counts = [s[1] for s in subject_stats if s[0]]
 
-    # Unique lists for dropdowns (shows all available students' hierarchy)
+    # Unique lists for dropdowns (shows all available students' hierarchy with sensible defaults)
     semesters = [y[0] for y in db.query(Student.semester).distinct().all() if y[0]]
+    if not semesters: semesters = ["Semester 1", "Semester 2", "Semester 3", "Semester 4", "Semester 5", "Semester 6"]
     depts = [d[0] for d in db.query(Student.dept).distinct().all() if d[0]]
+    if not depts: depts = ["Computer", "AI/DS", "IT", "Mechanical"]
     divs = [d[0] for d in db.query(Student.div).distinct().all() if d[0]]
+    if not divs: divs = ["A", "B", "C"]
 
     teacher_subjects = db.query(Subject).filter(Subject.teacher_username == t_user).all()
 
@@ -179,10 +228,18 @@ async def teacher_edge_page(request: Request, db: Session = Depends(get_db)):
         return RedirectResponse(url="/teacher/login")
     
     semesters = [y[0] for y in db.query(Student.semester).distinct().all() if y[0]]
+    if not semesters: semesters = ["Semester 1", "Semester 2", "Semester 3", "Semester 4", "Semester 5", "Semester 6"]
     depts = [d[0] for d in db.query(Student.dept).distinct().all() if d[0]]
+    if not depts: depts = ["Computer", "AI/DS", "IT", "Mechanical"]
     divs = [d[0] for d in db.query(Student.div).distinct().all() if d[0]]
+    if not divs: divs = ["A", "B", "C"]
 
     teacher_subjects = db.query(Subject).filter(Subject.teacher_username == t_user).all()
+    if not teacher_subjects:
+        for s_name, s_code in [("Data Structures & Algorithms", "CS-301"), ("Database Management Systems", "CS-302"), ("Computer Networks", "CS-303")]:
+            db.add(Subject(name=s_name, code=s_code, semester="Semester 3", teacher_username=t_user))
+        db.commit()
+        teacher_subjects = db.query(Subject).filter(Subject.teacher_username == t_user).all()
 
     return templates.TemplateResponse(request=request, name="teacher_edge.html", context={
         "semesters": semesters, "depts": depts, "divs": divs, "subjects": teacher_subjects
@@ -255,6 +312,10 @@ async def student_dashboard(request: Request, db: Session = Depends(get_db)):
         return RedirectResponse(url="/student/login")
     
     student = db.query(Student).filter(Student.roll_no == roll_no).first()
+    if not student:
+        res = RedirectResponse(url="/student/login")
+        res.delete_cookie(key="student_session", path="/")
+        return res
     records = db.query(Attendance).filter(Attendance.roll_no == roll_no).all()
     
     # Format for FullCalendar

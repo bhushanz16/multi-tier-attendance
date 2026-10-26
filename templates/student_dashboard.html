@@ -55,8 +55,8 @@
         </div>
         <div class="flex items-center gap-4">
             <div class="flex flex-col text-right hidden sm:flex">
-                <span class="font-headline-sm text-sm text-on-surface font-bold">{{ student.name|title }}</span>
-                <span class="font-mono-code-sm text-xs text-outline">{{ student.semester }} | {{ student.dept|upper }} | Div {{ student.div }}</span>
+                <span class="font-headline-sm text-sm text-on-surface font-bold">{{ (student.name if student and student.name else 'Student')|title }}</span>
+                <span class="font-mono-code-sm text-xs text-outline">{{ student.semester if student else '' }} | {{ (student.dept if student else '')|upper }} | Div {{ student.div if student else '' }}</span>
             </div>
             <div class="h-6 w-[1px] bg-surface-container-highest"></div>
             <a href="/student/logout" class="flex items-center gap-1 bg-error-container/10 border border-error/30 text-error hover:bg-error hover:text-white font-mono-code-sm text-xs px-3 py-1.5 rounded transition-all">
@@ -82,9 +82,9 @@
                 </div>
 
                 <div class="space-y-1 mb-3">
-                    <div class="font-headline-sm text-lg font-bold text-on-surface leading-tight">{{ student.name|title }}</div>
-                    <div class="font-mono-code-sm text-xs text-tertiary-fixed font-semibold">Roll No: {{ student.roll_no }}</div>
-                    <div class="font-mono-code-sm text-[11px] text-outline">{{ student.semester }} • Dept: {{ student.dept }} • Div {{ student.div }}</div>
+                    <div class="font-headline-sm text-lg font-bold text-on-surface leading-tight">{{ (student.name if student and student.name else 'Student')|title }}</div>
+                    <div class="font-mono-code-sm text-xs text-tertiary-fixed font-semibold">Roll No: {{ student.roll_no if student else '' }}</div>
+                    <div class="font-mono-code-sm text-[11px] text-outline">{{ student.semester if student else '' }} • Dept: {{ student.dept if student else '' }} • Div {{ student.div if student else '' }}</div>
                 </div>
 
                 <!-- 1D BARCODE & 2D QR CODE CONTAINERS -->
