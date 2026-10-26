@@ -262,22 +262,41 @@
                         <form method="POST" action="/teacher/subject" class="space-y-space-sm mb-space-md">
                             <div class="flex flex-col gap-1 font-mono-code-sm">
                                 <label class="text-label-caps text-outline">Subject Name</label>
-                                <input type="text" name="name" required placeholder="e.g. Physics 101" class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-2 focus:border-primary-container focus:outline-none focus:shadow-[inset_0_0_4px_rgba(0,240,255,0.2)] transition-all">
+                                <input type="text" name="name" required placeholder="e.g. Data Structures & Algorithms" class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-2 focus:border-primary-container focus:outline-none focus:shadow-[inset_0_0_4px_rgba(0,240,255,0.2)] transition-all">
                             </div>
                             <div class="flex flex-col gap-1 font-mono-code-sm">
                                 <label class="text-label-caps text-outline">Subject Code</label>
-                                <input type="text" name="code" required placeholder="e.g. PHY101" class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-2 focus:border-primary-container focus:outline-none focus:shadow-[inset_0_0_4px_rgba(0,240,255,0.2)] transition-all">
+                                <input type="text" name="code" required placeholder="e.g. CS-301" class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-2 focus:border-primary-container focus:outline-none focus:shadow-[inset_0_0_4px_rgba(0,240,255,0.2)] transition-all">
                             </div>
-                            <div class="flex flex-col gap-1 font-mono-code-sm">
-                                <label class="text-label-caps text-outline">Semester</label>
-                                <select name="semester" required class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-2 focus:border-primary-container focus:outline-none">
-                                    <option value="Semester 1">Semester 1</option>
-                                    <option value="Semester 2">Semester 2</option>
-                                    <option value="Semester 3">Semester 3</option>
-                                    <option value="Semester 4">Semester 4</option>
-                                </select>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 font-mono-code-sm">
+                                <div class="flex flex-col gap-1">
+                                    <label class="text-label-caps text-outline">Department</label>
+                                    <select name="dept" required class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-2 py-2 focus:border-primary-container focus:outline-none">
+                                        <option value="All">All</option>
+                                        {% for d in depts %}
+                                            <option value="{{ d }}">{{ d }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="flex flex-col gap-1">
+                                    <label class="text-label-caps text-outline">Semester</label>
+                                    <select name="semester" required class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-2 py-2 focus:border-primary-container focus:outline-none">
+                                        {% for sem in semesters %}
+                                            <option value="{{ sem }}">{{ sem }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="flex flex-col gap-1">
+                                    <label class="text-label-caps text-outline">Division</label>
+                                    <select name="div" required class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-2 py-2 focus:border-primary-container focus:outline-none">
+                                        <option value="All">All</option>
+                                        {% for d in divs %}
+                                            <option value="{{ d }}">{{ d }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
                             </div>
-                            <button type="submit" class="w-full flex items-center justify-center gap-space-xs bg-primary-container/10 border border-primary-container text-primary-fixed hover:bg-primary-container hover:text-on-primary-container font-headline-sm text-mono-code-sm py-space-sm rounded-DEFAULT shadow-[0_0_10px_rgba(0,240,255,0.2)] transition-all">
+                            <button type="submit" class="w-full flex items-center justify-center gap-space-xs bg-primary-container/10 border border-primary-container text-primary-fixed hover:bg-primary-container hover:text-on-primary-container font-headline-sm text-mono-code-sm py-space-sm rounded-DEFAULT shadow-[0_0_10px_rgba(0,240,255,0.2)] transition-all mt-2">
                                 <span class="material-symbols-outlined text-base">add</span>
                                 <span>Create Subject</span>
                             </button>
@@ -288,15 +307,19 @@
                                 <thead class="bg-surface-container-lowest text-outline font-label-caps text-label-caps uppercase">
                                     <tr>
                                         <th class="py-space-xs px-space-sm">Subject</th>
+                                        <th class="py-space-xs px-space-sm">Dept</th>
                                         <th class="py-space-xs px-space-sm">Sem</th>
+                                        <th class="py-space-xs px-space-sm">Div</th>
                                         <th class="py-space-xs px-space-sm text-right"></th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-surface-container-highest/50">
                                     {% for s in teacher_subjects %}
-                                    <tr class="bg-surface-container/60">
-                                        <td class="py-space-sm px-space-sm text-on-surface">{{ s.name }} ({{ s.code }})</td>
+                                    <tr class="bg-surface-container/60 hover:bg-surface-container-high transition-colors">
+                                        <td class="py-space-sm px-space-sm text-on-surface font-semibold">{{ s.name }} ({{ s.code }})</td>
+                                        <td class="py-space-sm px-space-sm text-tertiary-fixed">{{ s.dept or 'All' }}</td>
                                         <td class="py-space-sm px-space-sm text-outline">{{ s.semester }}</td>
+                                        <td class="py-space-sm px-space-sm text-secondary-fixed">{{ s.div or 'All' }}</td>
                                         <td class="py-space-sm px-space-sm text-right">
                                             <button onclick="deleteSubject({{ s.id }})" class="text-error hover:text-white">Delete</button>
                                         </td>

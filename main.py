@@ -6,13 +6,12 @@ from fastapi import FastAPI, Depends, Request, Response, Form, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, desc, text
 from sqlalchemy.orm import sessionmaker, Session
 from datetime import datetime
 from pydantic import BaseModel
 from typing import List
 from sqlalchemy.sql import func
-from sqlalchemy import desc
 
 from models import Base, Student, Attendance, Teacher, Subject, AuditLog
 
@@ -57,6 +56,18 @@ def init_db():
             Base.metadata.create_all(bind=engine)
 
     try:
+        # Check and add columns to subjects table if missing
+        try:
+            with engine.connect() as conn:
+                for col in ["dept", "div"]:
+                    try:
+                        conn.execute(text(f"ALTER TABLE subjects ADD COLUMN {col} VARCHAR"))
+                        conn.commit()
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+
         db = SessionLocal()
         # Seed default faculty accounts if not existing
         if not db.query(Teacher).filter(Teacher.username=="admin").first():
@@ -86,9 +97,9 @@ def init_db():
 
         # Seed default subjects for admin so scanner is ready immediately
         if not db.query(Subject).filter(Subject.teacher_username == "admin").first():
-            db.add(Subject(name="Data Structures & Algorithms", code="CS-301", semester="Semester 3", teacher_username="admin"))
-            db.add(Subject(name="Database Management Systems", code="CS-302", semester="Semester 3", teacher_username="admin"))
-            db.add(Subject(name="Computer Networks", code="CS-303", semester="Semester 3", teacher_username="admin"))
+            db.add(Subject(name="Data Structures & Algorithms", code="CS-301", semester="Semester 3", dept="Computer", div="A", teacher_username="admin"))
+            db.add(Subject(name="Database Management Systems", code="CS-302", semester="Semester 3", dept="Computer", div="A", teacher_username="admin"))
+            db.add(Subject(name="Computer Networks", code="CS-303", semester="Semester 3", dept="Computer", div="A", teacher_username="admin"))
 
         db.commit()
         db.close()
@@ -237,7 +248,7 @@ async def teacher_edge_page(request: Request, db: Session = Depends(get_db)):
     teacher_subjects = db.query(Subject).filter(Subject.teacher_username == t_user).all()
     if not teacher_subjects:
         for s_name, s_code in [("Data Structures & Algorithms", "CS-301"), ("Database Management Systems", "CS-302"), ("Computer Networks", "CS-303")]:
-            db.add(Subject(name=s_name, code=s_code, semester="Semester 3", teacher_username=t_user))
+            db.add(Subject(name=s_name, code=s_code, semester="Semester 3", dept="Computer", div="A", teacher_username=t_user))
         db.commit()
         teacher_subjects = db.query(Subject).filter(Subject.teacher_username == t_user).all()
 
@@ -246,12 +257,23 @@ async def teacher_edge_page(request: Request, db: Session = Depends(get_db)):
     })
 
 @app.post("/teacher/subject")
-async def create_subject(request: Request, name: str = Form(...), code: str = Form(...), semester: str = Form(...), db: Session = Depends(get_db)):
+async def create_subject(
+    request: Request, 
+    name: str = Form(...), 
+    code: str = Form(...), 
+    semester: str = Form(...),
+    dept: str = Form("Computer"),
+    div: str = Form("All"),
+    db: Session = Depends(get_db)
+):
     t_user = get_teacher_user(request)
     if not t_user: return RedirectResponse(url="/teacher/login", status_code=302)
-    db.add(Subject(name=name, code=code, semester=semester, teacher_username=t_user))
+    db.add(Subject(name=name, code=code, semester=semester, dept=dept, div=div, teacher_username=t_user))
     db.commit()
-    return RedirectResponse(url="/teacher/dashboard", status_code=302)
+    referer = request.headers.get("referer")
+    if referer and ("/teacher/subjects" in referer or "/teacher/dashboard" in referer):
+        return RedirectResponse(url=referer, status_code=302)
+    return RedirectResponse(url="/teacher/subjects", status_code=302)
 
 @app.delete("/api/subject/{id}")
 async def delete_subject(id: int, request: Request, db: Session = Depends(get_db)):
@@ -526,8 +548,18 @@ async def teacher_subjects_page(request: Request, db: Session = Depends(get_db))
     if not t_user: return RedirectResponse(url="/teacher/login")
     subjects = db.query(Subject).filter(Subject.teacher_username == t_user).all()
     semesters = [y[0] for y in db.query(Student.semester).distinct().all() if y[0]]
-    if not semesters: semesters = ["Semester 1", "Semester 2", "Semester 3", "Semester 4"]
-    return templates.TemplateResponse(request=request, name="teacher_subjects.html", context={"t_user": t_user, "subjects": subjects, "semesters": semesters})
+    if not semesters: semesters = ["Semester 1", "Semester 2", "Semester 3", "Semester 4", "Semester 5", "Semester 6"]
+    depts = [d[0] for d in db.query(Student.dept).distinct().all() if d[0]]
+    if not depts: depts = ["Computer", "AI/DS", "IT", "Mechanical", "Civil", "Electrical"]
+    divs = [d[0] for d in db.query(Student.div).distinct().all() if d[0]]
+    if not divs: divs = ["A", "B", "C", "D"]
+    return templates.TemplateResponse(request=request, name="teacher_subjects.html", context={
+        "t_user": t_user, 
+        "subjects": subjects, 
+        "semesters": semesters,
+        "depts": depts,
+        "divs": divs
+    })
 
 @app.get("/teacher/reports", response_class=HTMLResponse)
 async def teacher_reports_page(request: Request, db: Session = Depends(get_db)):

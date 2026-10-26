@@ -397,28 +397,58 @@
         let barcodeActive = false;
         let matchThreshold = 0.55;
 
-        // Subject list from backend
+        // Subject list from backend with Semester, Department, and Division
         const allSubjects = [
             {% for s in subjects %}
-                { name: "{{ s.name }}", code: "{{ s.code }}", semester: "{{ s.semester }}" },
+                { 
+                    name: "{{ s.name }}", 
+                    code: "{{ s.code }}", 
+                    semester: "{{ s.semester }}",
+                    dept: "{{ s.dept or 'All' }}",
+                    div: "{{ s.div or 'All' }}"
+                },
             {% endfor %}
         ];
 
-        selSemester.addEventListener('change', () => {
+        function filterSubjects() {
             const sem = selSemester.value;
+            const dept = selDept.value;
+            const div = selDiv.value;
+            
             selSubject.innerHTML = '';
-            const filtered = allSubjects.filter(s => s.semester === sem);
+            
+            if(!sem) {
+                selSubject.innerHTML = '<option value="">Select semester first...</option>';
+                return;
+            }
+
+            const filtered = allSubjects.filter(s => {
+                const semMatch = (!s.semester || s.semester === 'All' || s.semester === sem);
+                const deptMatch = (!dept || !s.dept || s.dept === 'All' || s.dept.toLowerCase() === dept.toLowerCase());
+                const divMatch = (!div || !s.div || s.div === 'All' || s.div.toUpperCase() === div.toUpperCase());
+                return semMatch && deptMatch && divMatch;
+            });
+
             if(filtered.length === 0) {
-                selSubject.innerHTML = '<option value="">No subjects found for this semester. Create one in Dashboard.</option>';
+                selSubject.innerHTML = '<option value="">No subjects match this Sem / Dept / Division. (Add in My Subjects)</option>';
             } else {
                 filtered.forEach(s => {
                     const opt = document.createElement('option');
                     opt.value = `${s.name} (${s.code})`;
-                    opt.innerText = `${s.name} (${s.code})`;
+                    const deptTag = (s.dept && s.dept !== 'All') ? s.dept : 'All Depts';
+                    const divTag = (s.div && s.div !== 'All') ? `Div ${s.div}` : 'All Divs';
+                    opt.innerText = `${s.name} (${s.code}) • [${deptTag} | ${divTag}]`;
                     selSubject.appendChild(opt);
                 });
             }
-        });
+        }
+
+        selSemester.addEventListener('change', filterSubjects);
+        selDept.addEventListener('change', filterSubjects);
+        selDiv.addEventListener('change', filterSubjects);
+        
+        // Initial run
+        filterSubjects();
 
         // Threshold slider
         thresholdSlider.addEventListener('input', (e) => {

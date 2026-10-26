@@ -46,6 +46,8 @@ class Subject(Base):
     name = Column(String, index=True)
     code = Column(String, index=True)
     semester = Column(String, index=True)
+    dept = Column(String, index=True, nullable=True) # e.g. Computer, AI/DS, IT, Mechanical, All
+    div = Column(String, index=True, nullable=True)   # e.g. All, A, B, C, D
     teacher_username = Column(String, index=True)
 
 class AuditLog(Base):
