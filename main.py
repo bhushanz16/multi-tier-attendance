@@ -30,10 +30,9 @@ if DATABASE_URL.startswith("postgres://"):
 if "sqlite" in DATABASE_URL:
     engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 else:
-    engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+    engine = create_engine(DATABASE_URL, pool_pre_ping=True, pool_recycle=300)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base.metadata.create_all(bind=engine)
 
 def get_db():
     db = SessionLocal()
@@ -43,15 +42,22 @@ def get_db():
         db.close()
 
 def init_db():
-    db = SessionLocal()
-    # Let's add two teachers so the user can test data isolation
-    if not db.query(Teacher).filter(Teacher.username=="admin").first():
-        db.add(Teacher(username="admin", password="password"))
-    if not db.query(Teacher).filter(Teacher.username=="professor2").first():
-        db.add(Teacher(username="professor2", password="password"))
-    db.commit()
-    db.close()
-init_db()
+    try:
+        Base.metadata.create_all(bind=engine)
+        db = SessionLocal()
+        if not db.query(Teacher).filter(Teacher.username=="admin").first():
+            db.add(Teacher(username="admin", name="Administrator", password="password", designation="HOD", dept="Computer"))
+        if not db.query(Teacher).filter(Teacher.username=="professor2").first():
+            db.add(Teacher(username="professor2", name="Prof. Sharma", password="password", designation="Assistant Professor", dept="Computer"))
+        db.commit()
+        db.close()
+        print("Database schema verified and initial teachers seeded successfully.")
+    except Exception as e:
+        print(f"Database connection error during initialization: {e}")
+
+@app.on_event("startup")
+async def startup_event():
+    init_db()
 
 def get_teacher_user(request: Request):
     return request.cookies.get("teacher_session")
