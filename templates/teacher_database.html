@@ -69,13 +69,17 @@
             </div>
 
             <!-- Upload Box -->
-            <div class="flex flex-col gap-3">
-                <label class="border-2 border-dashed border-surface-container-highest hover:border-primary-container rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition-colors bg-surface-container-lowest/50">
-                    <span class="material-symbols-outlined text-primary-fixed text-4xl mb-1">cloud_upload</span>
-                    <span class="font-headline-sm text-xs font-bold text-on-surface">Click or Drag & Drop Student Photo</span>
-                    <span class="text-[11px] font-mono-code-sm text-outline mt-1">Supports JPG, PNG, WEBP (Selfie / Passport size)</span>
-                    <input type="file" id="photoFileInput" accept="image/*" class="hidden">
-                </label>
+            <div id="dropZone" class="border-2 border-dashed border-surface-container-highest hover:border-primary-container rounded-xl p-5 flex flex-col items-center justify-center transition-all bg-surface-container-lowest/50 text-center gap-2">
+                <span class="material-symbols-outlined text-primary-fixed text-4xl">add_photo_alternate</span>
+                <div>
+                    <span class="font-headline-sm text-sm font-bold text-on-surface block">Select or Drag & Drop Student Photo</span>
+                    <span class="text-[11px] font-mono-code-sm text-outline block mt-0.5">Supports JPG, PNG, WEBP (Selfie, Passport Photo)</span>
+                </div>
+                
+                <div class="mt-2 w-full max-w-xs">
+                    <input type="file" id="photoFileInput" accept="image/*" class="w-full text-xs font-mono-code-sm text-outline file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-primary-container file:text-on-primary-container hover:file:opacity-90 cursor-pointer bg-surface-container p-1 rounded-lg border border-surface-container-highest">
+                </div>
+            </div>
 
                 <!-- Photo Preview & Face Analysis Box -->
                 <div id="previewContainer" class="hidden relative rounded-lg overflow-hidden border border-surface-container-highest bg-black flex justify-center items-center min-h-[220px]">
@@ -332,9 +336,7 @@
             }
         }
 
-        // Handle Image Selection
-        photoFileInput.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
+        function processSelectedImage(file) {
             if(!file) return;
 
             saveBiometricsBtn.disabled = true;
@@ -350,7 +352,6 @@
                     await loadModels();
 
                     try {
-                        // Detect single face with relaxed confidence (0.25) so photos taken in different lighting work
                         const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.25 });
                         const detection = await faceapi.detectSingleFace(sourceImage, options)
                             .withFaceLandmarks()
@@ -388,6 +389,37 @@
                 };
             };
             reader.readAsDataURL(file);
+        }
+
+        // Handle Image Selection
+        photoFileInput.addEventListener('change', (e) => {
+            if(e.target.files && e.target.files[0]) {
+                processSelectedImage(e.target.files[0]);
+            }
+        });
+
+        // Drag and Drop support
+        const dropZone = document.getElementById('dropZone');
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.add('border-primary-container', 'bg-primary-container/10');
+            }, false);
+        });
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.remove('border-primary-container', 'bg-primary-container/10');
+            }, false);
+        });
+        dropZone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if(files && files[0]) {
+                processSelectedImage(files[0]);
+            }
         });
 
         // Save Biometrics to DB

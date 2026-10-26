@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Faculty Registration - Attendance Hub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet"/>
+    <style>@layer base{html,body{margin:0;padding:0;background-color:#0b1326;color:#dae2fd;}::-webkit-scrollbar{display:none;}}</style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="tailwind-config">
+        tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "on-tertiary-container": "#006d4a", "on-secondary": "#4a007f", "secondary": "#deb7ff", "error": "#ffb4ab", "primary": "#dbfcff", "inverse-surface": "#dae2fd", "surface-container-lowest": "#060e20", "on-secondary-container": "#d4a5ff", "on-background": "#dae2fd", "surface-container-highest": "#2d3449", "background": "#0b1326", "inverse-primary": "#006970", "on-secondary-fixed-variant": "#680eac", "tertiary-fixed": "#6ffbbe", "surface-container-high": "#222a3d", "surface-container-low": "#131b2e", "on-primary-fixed-variant": "#004f54", "secondary-fixed": "#f1dbff", "surface-dim": "#0b1326", "on-primary": "#00363a", "primary-fixed": "#7df4ff", "on-error": "#690005", "on-surface": "#dae2fd", "surface-tint": "#00dbe9", "tertiary": "#d8ffe7", "on-tertiary-fixed": "#002113", "on-tertiary-fixed-variant": "#005236", "surface-container": "#171f33", "on-primary-container": "#006970", "on-secondary-fixed": "#2d0050", "surface-variant": "#2d3449", "surface-bright": "#31394d", "on-primary-fixed": "#002022", "secondary-container": "#6b13af", "on-tertiary": "#003824", "tertiary-container": "#65f2b5", "surface": "#0b1326", "primary-container": "#00f0ff", "tertiary-fixed-dim": "#4edea3", "on-surface-variant": "#b9cacb", "on-error-container": "#ffdad6", "inverse-on-surface": "#283044", "secondary-fixed-dim": "#deb7ff", "outline-variant": "#3b494b", "primary-fixed-dim": "#00dbe9", "outline": "#849495", "error-container": "#93000a" }, "borderRadius": { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" } } } };
+    </script>
+</head>
+<body class="bg-background font-body-md text-on-surface antialiased flex items-center justify-center min-h-screen relative overflow-hidden py-10">
+    <div class="absolute -right-20 -top-20 w-96 h-96 bg-primary-container/10 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="w-full max-w-2xl p-space-lg relative z-10">
+        <div class="bg-surface-container-lowest rounded-xl p-space-xl border border-surface-container-highest shadow-xl">
+            <div class="flex flex-col items-center mb-space-lg text-center border-b border-surface-container-highest pb-space-md">
+                <span class="material-symbols-outlined text-primary-fixed text-4xl mb-2">how_to_reg</span>
+                <h1 class="font-headline-lg text-headline-lg text-primary-fixed tracking-tight">Faculty & Teacher Registration</h1>
+                <p class="font-mono-code-sm text-outline tracking-wider mt-1">CREATE TEACHER ACCOUNT WITH DEPARTMENT & POSITION</p>
+            </div>
+
+            <form action="/teacher/register" method="POST" class="space-y-space-md">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+                    <div class="flex flex-col gap-1 font-mono-code-sm">
+                        <label class="text-label-caps text-outline">Full Name (with Title)</label>
+                        <input type="text" name="name" placeholder="e.g. Dr. Rajesh Sharma" required class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-2 focus:border-primary-container focus:outline-none">
+                    </div>
+                    <div class="flex flex-col gap-1 font-mono-code-sm">
+                        <label class="text-label-caps text-outline">Username (for login)</label>
+                        <input type="text" name="username" placeholder="e.g. prof_sharma" required class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-2 focus:border-primary-container focus:outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+                    <div class="flex flex-col gap-1 font-mono-code-sm">
+                        <label class="text-label-caps text-outline">Email Address</label>
+                        <input type="email" name="email" placeholder="e.g. sharma@college.edu" class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-2 focus:border-primary-container focus:outline-none">
+                    </div>
+                    <div class="flex flex-col gap-1 font-mono-code-sm">
+                        <label class="text-label-caps text-outline">Password</label>
+                        <input type="password" name="password" required class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-2 focus:border-primary-container focus:outline-none">
+                    </div>
+                </div>
+
+                <!-- Academic Position & Department Details -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-space-md bg-surface-container-low p-space-md rounded-lg border border-surface-container">
+                    <div class="flex flex-col gap-1 font-mono-code-sm">
+                        <label class="text-label-caps text-outline">Department</label>
+                        <select name="dept" required class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-2 focus:border-primary-container focus:outline-none">
+                            <option value="Computer">Computer Engineering</option>
+                            <option value="AI/DS">Artificial Intelligence & Data Science</option>
+                            <option value="IT">Information Technology</option>
+                            <option value="Mechanical">Mechanical Engineering</option>
+                            <option value="Civil">Civil Engineering</option>
+                            <option value="Electrical">Electrical Engineering</option>
+                            <option value="Electronics">Electronics & Telecom (EXTC)</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-col gap-1 font-mono-code-sm">
+                        <label class="text-label-caps text-outline">Designation / Position</label>
+                        <select name="designation" required class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-2 focus:border-primary-container focus:outline-none">
+                            <option value="Head of Department (HOD)">Head of Department (HOD)</option>
+                            <option value="Professor">Professor</option>
+                            <option value="Associate Professor">Associate Professor</option>
+                            <option value="Assistant Professor" selected>Assistant Professor</option>
+                            <option value="Class Incharge / Coordinator">Class Incharge / Coordinator</option>
+                            <option value="Visiting Lecturer">Visiting Lecturer</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-space-md bg-surface-container-low p-space-md rounded-lg border border-surface-container">
+                    <div class="flex flex-col gap-1 font-mono-code-sm">
+                        <label class="text-label-caps text-outline">Assigned Class Semester</label>
+                        <select name="assigned_semester" required class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-2 focus:border-primary-container focus:outline-none">
+                            <option value="Semester 1">Semester 1</option>
+                            <option value="Semester 2">Semester 2</option>
+                            <option value="Semester 3" selected>Semester 3</option>
+                            <option value="Semester 4">Semester 4</option>
+                            <option value="Semester 5">Semester 5</option>
+                            <option value="Semester 6">Semester 6</option>
+                            <option value="Semester 7">Semester 7</option>
+                            <option value="Semester 8">Semester 8</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-col gap-1 font-mono-code-sm">
+                        <label class="text-label-caps text-outline">Assigned Division</label>
+                        <select name="assigned_div" required class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-2 focus:border-primary-container focus:outline-none">
+                            <option value="A" selected>Division A</option>
+                            <option value="B">Division B</option>
+                            <option value="C">Division C</option>
+                            <option value="D">Division D</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button type="submit" class="w-full mt-4 flex items-center justify-center gap-space-xs bg-primary-container text-on-primary-container font-headline-sm font-bold text-mono-code-sm py-space-sm rounded-DEFAULT shadow-[0_0_12px_rgba(0,240,255,0.3)] hover:opacity-95 transition-all">
+                    <span>REGISTER TEACHER ACCOUNT</span>
+                </button>
+            </form>
+            <div class="mt-4 text-center space-y-2">
+                <div><a href="/teacher/login" class="text-primary-fixed hover:text-white font-mono-code-sm text-mono-code-sm">Already registered? Log in here -></a></div>
+                <div><a href="/" class="text-outline hover:text-white font-mono-code-sm text-mono-code-sm"><- Back Home</a></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

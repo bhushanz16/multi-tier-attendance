@@ -70,18 +70,42 @@ async def teacher_login_page(request: Request):
     return templates.TemplateResponse(request=request, name="teacher_login.html")
 
 @app.post("/teacher/login")
-async def teacher_login_post(response: Response, username: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
+async def teacher_login_post(username: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
     teacher = db.query(Teacher).filter(Teacher.username == username, Teacher.password == password).first()
     if teacher:
         res = RedirectResponse(url="/teacher/dashboard", status_code=302)
-        res.set_cookie(key="teacher_session", value=username)
+        res.set_cookie(key="teacher_session", value=username, path="/", samesite="lax")
         return res
     return HTMLResponse("Invalid credentials", status_code=401)
 
+@app.get("/teacher/register", response_class=HTMLResponse)
+async def teacher_register_page(request: Request):
+    return templates.TemplateResponse(request=request, name="teacher_register.html")
+
+@app.post("/teacher/register")
+async def teacher_register_post(
+    username: str = Form(...), name: str = Form(...), password: str = Form(...),
+    email: str = Form(""), dept: str = Form(...), designation: str = Form(...),
+    assigned_semester: str = Form(...), assigned_div: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    existing = db.query(Teacher).filter(Teacher.username == username).first()
+    if existing:
+        return HTMLResponse("Username already taken. Please choose another username.", status_code=400)
+    
+    new_teacher = Teacher(
+        username=username, name=name, password=password, email=email,
+        dept=dept, designation=designation, assigned_semester=assigned_semester, assigned_div=assigned_div
+    )
+    db.add(new_teacher)
+    db.commit()
+    return RedirectResponse(url="/teacher/login", status_code=302)
+
 @app.get("/teacher/logout")
-async def teacher_logout(response: Response):
+async def teacher_logout():
     res = RedirectResponse(url="/teacher/login", status_code=302)
-    res.delete_cookie("teacher_session")
+    res.delete_cookie(key="teacher_session", path="/")
+    res.set_cookie(key="teacher_session", value="", max_age=0, expires=0, path="/")
     return res
 
 @app.get("/teacher/dashboard", response_class=HTMLResponse)
@@ -89,6 +113,8 @@ async def teacher_dashboard(request: Request, semester: str = None, dept: str = 
     t_user = get_teacher_user(request)
     if not t_user:
         return RedirectResponse(url="/teacher/login")
+    
+    teacher_obj = db.query(Teacher).filter(Teacher.username == t_user).first()
     
     # ISOLATE DATA: Filter Records based on Hierarchy AND Teacher Username
     query = db.query(Attendance).filter(Attendance.teacher_username == t_user)
@@ -124,6 +150,7 @@ async def teacher_dashboard(request: Request, semester: str = None, dept: str = 
         name="teacher_dashboard.html", 
         context={
             "t_user": t_user,
+            "teacher": teacher_obj,
             "records": records, 
             "total_records": total_records,
             "classes_today": classes_today,
@@ -185,7 +212,7 @@ async def student_login_post(roll_no: str = Form(...), password: str = Form(...)
     student = db.query(Student).filter(Student.roll_no == roll_no, Student.password == password).first()
     if student:
         res = RedirectResponse(url="/student/dashboard", status_code=302)
-        res.set_cookie(key="student_session", value=roll_no)
+        res.set_cookie(key="student_session", value=roll_no, path="/", samesite="lax")
         return res
     return HTMLResponse("Invalid roll number or password", status_code=401)
 
@@ -209,9 +236,10 @@ async def student_register_post(
     return RedirectResponse(url="/student/login", status_code=302)
 
 @app.get("/student/logout")
-async def student_logout(response: Response):
+async def student_logout():
     res = RedirectResponse(url="/student/login", status_code=302)
-    res.delete_cookie("student_session")
+    res.delete_cookie(key="student_session", path="/")
+    res.set_cookie(key="student_session", value="", max_age=0, expires=0, path="/")
     return res
 
 @app.get("/student/dashboard", response_class=HTMLResponse)

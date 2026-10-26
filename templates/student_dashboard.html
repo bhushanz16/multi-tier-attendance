@@ -136,17 +136,14 @@
                         <span>CAPTURE & SAVE FACE BIOMETRIC</span>
                     </button>
                     
-                    <div class="w-full flex items-center gap-2 my-2 text-[10px] font-mono-code-sm text-outline">
-                        <div class="flex-1 h-[1px] bg-surface-container-highest"></div>
-                        <span>OR UPLOAD SELFIE / PHOTO</span>
-                        <div class="flex-1 h-[1px] bg-surface-container-highest"></div>
+                    <div class="w-full mt-3 p-3 bg-surface-container-lowest/60 rounded-lg border border-surface-container-highest flex flex-col items-center gap-2 text-center">
+                        <span class="font-headline-sm text-xs font-bold text-secondary-fixed flex items-center gap-1.5">
+                            <span class="material-symbols-outlined text-base">add_photo_alternate</span>
+                            <span>Upload Selfie / Photo From Device</span>
+                        </span>
+                        <span class="text-[10px] font-mono-code-sm text-outline">No webcam needed! Select any clear front-facing photo from your gallery.</span>
+                        <input type="file" id="studentPhotoUpload" accept="image/*" class="w-full text-xs font-mono-code-sm text-outline file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-secondary-container file:text-white hover:file:opacity-90 cursor-pointer bg-surface-container p-1 rounded border border-surface-container-highest">
                     </div>
-
-                    <label class="w-full flex items-center justify-center gap-2 bg-surface-container hover:bg-surface-container-high border border-surface-container-highest text-secondary-fixed font-headline-sm text-xs py-2 rounded cursor-pointer transition-colors">
-                        <span class="material-symbols-outlined text-base">add_photo_alternate</span>
-                        <span>UPLOAD PHOTO FROM DEVICE</span>
-                        <input type="file" id="studentPhotoUpload" accept="image/*" class="hidden">
-                    </label>
 
                     <div id="status" class="mt-2 font-mono-code-sm text-outline text-[11px]">Initializing camera & AI models...</div>
                 </div>
@@ -383,6 +380,14 @@
                 img.src = event.target.result;
                 img.onload = async () => {
                     try {
+                        if(!faceapi.nets.ssdMobilenetv1.isLoaded) {
+                            statusDiv.innerText = "Loading AI models...";
+                            await Promise.all([
+                                faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+                                faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                                faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+                            ]);
+                        }
                         const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.25 });
                         const detection = await faceapi.detectSingleFace(img, options).withFaceLandmarks().withFaceDescriptor();
 

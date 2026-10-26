@@ -8,7 +8,13 @@ class Teacher(Base):
     __tablename__ = "teachers"
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
+    name = Column(String, nullable=True) # Full Name, e.g., Dr. Rajesh Sharma
+    email = Column(String, nullable=True)
     password = Column(String)
+    dept = Column(String, nullable=True) # e.g. Computer, AI/DS, Mechanical
+    designation = Column(String, nullable=True) # e.g. Professor, Assistant Professor, HOD
+    assigned_semester = Column(String, nullable=True) # e.g. Semester 3
+    assigned_div = Column(String, nullable=True) # e.g. A, B
 
 class Student(Base):
     __tablename__ = "students"

@@ -125,7 +125,8 @@
             <div class="h-6 w-[1px] bg-surface-container-highest"></div>
             <div class="flex items-center gap-space-sm">
                 <div class="flex flex-col text-right">
-                    <span class="font-mono-metric-md text-mono-metric-md text-on-surface leading-tight">Teacher: {{ t_user|title }}</span>
+                    <span class="font-headline-sm text-xs text-primary font-bold leading-tight">{{ teacher.name or t_user|title }}</span>
+                    <span class="font-mono-code-sm text-[11px] text-outline">{{ teacher.designation or 'Faculty' }}{% if teacher.dept %} • {{ teacher.dept }}{% endif %}</span>
                 </div>
             </div>
         </div>
