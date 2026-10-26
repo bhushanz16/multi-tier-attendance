@@ -2,7 +2,7 @@ import json
 import csv
 import io
 from fpdf import FPDF
-from fastapi import FastAPI, Depends, Request, Response, Form, HTTPException
+from fastapi import FastAPI, Depends, Request, Response, Form, HTTPException, UploadFile, File
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -346,6 +346,21 @@ async def student_register_post(
     db.commit()
     return RedirectResponse(url="/student/login", status_code=302)
 
+@app.post("/student/update_id")
+async def student_update_id(request: Request, student_id: str = Form(...), db: Session = Depends(get_db)):
+    roll_no = get_student_user(request)
+    if not roll_no: return RedirectResponse(url="/student/login")
+    student = db.query(Student).filter(Student.roll_no == roll_no).first()
+    if student and student_id and student_id.strip():
+        sid = student_id.strip()
+        taken = db.query(Student).filter(Student.student_id == sid, Student.roll_no != roll_no).first()
+        if not taken:
+            old_sid = student.student_id
+            student.student_id = sid
+            db.add(AuditLog(actor=roll_no, action_type="STUDENT_ID_SELF_UPDATE", target_student=roll_no, details=f"Student updated ID from [{old_sid}] to [{sid}]"))
+            db.commit()
+    return RedirectResponse(url="/student/dashboard", status_code=302)
+
 @app.get("/student/logout")
 async def student_logout():
     res = RedirectResponse(url="/student/login", status_code=302)
@@ -569,6 +584,113 @@ async def teacher_database_update(
         db.add(AuditLog(actor=t_user, action_type="MANUAL_DB_EDIT", target_student=roll_no, details=f"Changed from [{old_data}] to [{new_data}]"))
         db.commit()
     return RedirectResponse(url="/teacher/database", status_code=302)
+
+@app.post("/teacher/student/create")
+async def teacher_create_student(
+    request: Request,
+    student_id: str = Form(...),
+    roll_no: str = Form(...),
+    name: str = Form(...),
+    semester: str = Form(...),
+    dept: str = Form(...),
+    div: str = Form(...),
+    password: str = Form("password"),
+    db: Session = Depends(get_db)
+):
+    t_user = get_teacher_user(request)
+    if not t_user: return RedirectResponse(url="/teacher/login")
+
+    sid = student_id.strip() if student_id else f"STU{roll_no.strip()}"
+    roll = roll_no.strip()
+
+    existing = db.query(Student).filter((Student.roll_no == roll) | (Student.student_id == sid)).first()
+    if existing:
+        return HTMLResponse(f"Student with Roll No {roll} or Student ID {sid} already exists.", status_code=400)
+
+    new_s = Student(
+        student_id=sid,
+        roll_no=roll,
+        name=name.strip(),
+        semester=semester,
+        dept=dept,
+        div=div,
+        password=password.strip() if password else "password"
+    )
+    db.add(new_s)
+    db.add(AuditLog(actor=t_user, action_type="STUDENT_MANUAL_CREATE", target_student=roll, details=f"Teacher created student: {name.strip()} (ID: {sid}, Roll: {roll})"))
+    db.commit()
+    return RedirectResponse(url="/teacher/database", status_code=302)
+
+@app.post("/teacher/students/upload_csv")
+async def teacher_upload_students_csv(
+    request: Request,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    t_user = get_teacher_user(request)
+    if not t_user: return RedirectResponse(url="/teacher/login")
+
+    contents = await file.read()
+    decoded = contents.decode("utf-8-sig")
+    reader = csv.DictReader(io.StringIO(decoded))
+
+    created = 0
+    updated = 0
+
+    for row in reader:
+        clean = {k.strip().lower(): v.strip() for k, v in row.items() if k and v}
+        sid = clean.get("student_id") or clean.get("prn") or clean.get("uid") or clean.get("id")
+        roll = clean.get("roll_no") or clean.get("roll") or clean.get("rollno")
+        name = clean.get("name") or clean.get("student_name")
+        sem = clean.get("semester") or clean.get("sem") or "Semester 3"
+        dept = clean.get("dept") or clean.get("department") or "Computer"
+        div = clean.get("div") or clean.get("division") or "A"
+        pwd = clean.get("password") or "password"
+
+        if not roll and not sid:
+            continue
+        if not roll: roll = sid
+        if not sid: sid = f"STU{roll}"
+        if not name: name = f"Student {roll}"
+
+        existing = db.query(Student).filter((Student.roll_no == roll) | (Student.student_id == sid)).first()
+        if existing:
+            existing.student_id = sid
+            existing.roll_no = roll
+            existing.name = name
+            existing.semester = sem
+            existing.dept = dept
+            existing.div = div
+            updated += 1
+        else:
+            db.add(Student(
+                student_id=sid,
+                roll_no=roll,
+                name=name,
+                semester=sem,
+                dept=dept,
+                div=div,
+                password=pwd
+            ))
+            created += 1
+
+    db.add(AuditLog(actor=t_user, action_type="CSV_STUDENT_UPLOAD", target_student="BULK", details=f"Teacher uploaded CSV: {created} students created, {updated} updated."))
+    db.commit()
+    return RedirectResponse(url="/teacher/database", status_code=302)
+
+@app.get("/api/sample_students_csv")
+async def download_sample_students_csv():
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["student_id", "roll_no", "name", "semester", "dept", "div", "password"])
+    writer.writerow(["STU202410", "110", "Sneha Rao", "Semester 3", "Computer", "A", "password"])
+    writer.writerow(["STU202411", "111", "Aditya Kulkarni", "Semester 3", "Computer", "A", "password"])
+    writer.writerow(["STU202412", "112", "Kavya Nair", "Semester 3", "Computer", "B", "password"])
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=sample_students_roster.csv"}
+    )
 
 @app.get("/teacher/audit", response_class=HTMLResponse)
 async def teacher_audit_logs(request: Request, db: Session = Depends(get_db)):

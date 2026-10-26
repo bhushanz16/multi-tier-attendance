@@ -88,6 +88,36 @@
                         <span class="text-outline">Roll: {{ student.roll_no if student else '' }}</span>
                     </div>
                     <div class="font-mono-code-sm text-[11px] text-outline">{{ student.semester if student else '' }} • Dept: {{ student.dept if student else '' }} • Div {{ student.div if student else '' }}</div>
+                    <div>
+                        <button onclick="document.getElementById('editStudentIdModal').classList.remove('hidden')" class="inline-flex items-center gap-1 text-[11px] font-mono-code-sm text-primary-fixed-dim hover:text-white transition-colors mt-1 underline decoration-dotted">
+                            <span class="material-symbols-outlined text-[13px]">edit</span>
+                            <span>Set / Change Physical ID Card Number</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Update Student ID Modal -->
+                <div id="editStudentIdModal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+                    <div class="bg-surface-container-low border border-primary-container/40 rounded-xl shadow-2xl p-6 w-full max-w-sm">
+                        <div class="flex items-center justify-between mb-4 border-b border-surface-container-highest pb-3">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-primary-fixed text-xl">badge</span>
+                                <h3 class="font-headline-sm text-sm text-primary font-bold">Update Student ID</h3>
+                            </div>
+                            <button type="button" onclick="document.getElementById('editStudentIdModal').classList.add('hidden')" class="text-outline hover:text-white"><span class="material-symbols-outlined text-sm">close</span></button>
+                        </div>
+                        <form method="POST" action="/student/update_id" class="space-y-4">
+                            <div class="flex flex-col gap-1.5 font-mono-code-sm text-xs">
+                                <label class="text-outline uppercase font-semibold">Physical ID Card / PRN / Admission No</label>
+                                <input type="text" name="student_id" required value="{{ student.student_id or '' }}" placeholder="e.g. STU202401, PRN9821, or Barcode UID" class="bg-surface-container text-on-surface border border-surface-container-highest rounded-lg px-3 py-2.5 focus:border-primary-container focus:outline-none text-xs">
+                                <p class="text-[10px] text-outline">This ID will be encoded into your barcode & QR code and matched during scanner verification.</p>
+                            </div>
+                            <div class="flex gap-2 pt-2">
+                                <button type="button" onclick="document.getElementById('editStudentIdModal').classList.add('hidden')" class="w-1/2 px-3 py-2 rounded-lg border border-surface-container-highest text-xs font-mono-code-sm text-outline hover:text-white">Cancel</button>
+                                <button type="submit" class="w-1/2 bg-primary-container text-on-primary-container font-headline-sm font-bold text-xs py-2 rounded-lg transition-all hover:opacity-95 shadow">Save ID</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
 
                 <!-- 1D BARCODE & 2D QR CODE CONTAINERS -->

@@ -28,13 +28,20 @@
             <form action="/student/register" method="POST" class="space-y-space-md">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
                     <div class="flex flex-col gap-1 font-mono-code-sm">
-                        <label class="text-label-caps text-outline">Roll Number</label>
-                        <input type="text" name="roll_no" required class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-2 focus:border-secondary-container focus:outline-none focus:shadow-[inset_0_0_4px_rgba(107,19,175,0.2)] transition-all">
+                        <label class="text-label-caps text-outline">Student ID (PRN / Physical ID Card)</label>
+                        <input type="text" name="student_id" placeholder="e.g. STU202401 or PRN-9821" required class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-2 focus:border-secondary-container focus:outline-none focus:shadow-[inset_0_0_4px_rgba(107,19,175,0.2)] transition-all">
+                        <span class="text-[10px] text-outline">UID printed or encoded on physical card</span>
                     </div>
                     <div class="flex flex-col gap-1 font-mono-code-sm">
-                        <label class="text-label-caps text-outline">Full Name</label>
-                        <input type="text" name="name" required class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-2 focus:border-secondary-container focus:outline-none focus:shadow-[inset_0_0_4px_rgba(107,19,175,0.2)] transition-all">
+                        <label class="text-label-caps text-outline">Class Roll Number</label>
+                        <input type="text" name="roll_no" placeholder="e.g. 101" required class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-2 focus:border-secondary-container focus:outline-none focus:shadow-[inset_0_0_4px_rgba(107,19,175,0.2)] transition-all">
+                        <span class="text-[10px] text-outline">Class roster number</span>
                     </div>
+                </div>
+
+                <div class="flex flex-col gap-1 font-mono-code-sm">
+                    <label class="text-label-caps text-outline">Full Name</label>
+                    <input type="text" name="name" placeholder="e.g. Aarav Sharma" required class="bg-surface-container text-on-surface border border-surface-container-highest rounded-DEFAULT px-space-sm py-2 focus:border-secondary-container focus:outline-none focus:shadow-[inset_0_0_4px_rgba(107,19,175,0.2)] transition-all">
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-space-md bg-surface-container-low p-space-md rounded-lg border border-surface-container">
