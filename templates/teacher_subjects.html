@@ -22,14 +22,20 @@
     </script>
 </head>
 <body class="bg-background font-body-md text-on-surface antialiased">
+    <!-- Mobile Backdrop Overlay -->
+    <div id="sidebarOverlay" onclick="toggleSidebar()" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-40 lg:hidden"></div>
+
     <!-- SIDEBAR -->
-    <aside class="fixed left-0 top-0 h-full w-72 bg-surface-container-lowest z-50 flex flex-col justify-between shadow-[0_1px_8px_rgba(0,0,0,0.4)]">
+    <aside id="sidebarNav" class="fixed left-0 top-0 h-full w-72 bg-surface-container-lowest z-50 flex flex-col justify-between shadow-2xl transition-transform duration-300 -translate-x-full lg:translate-x-0">
         <div class="flex flex-col">
-            <div class="h-14 px-space-md flex items-center gap-space-sm bg-surface-container-low border-b border-surface-container-highest">
+            <div class="h-14 px-4 flex items-center justify-between bg-surface-container-low border-b border-surface-container-highest">
                 <div class="flex flex-col">
-                    <span class="font-headline-sm text-headline-sm text-primary tracking-tight leading-none">ATTENDANCE HUB</span>
-                    <span class="font-label-caps text-label-caps text-primary-fixed-dim uppercase tracking-wider">Teacher Portal</span>
+                    <span class="font-headline-sm text-base text-primary tracking-tight leading-none font-bold">ATTENDANCE HUB</span>
+                    <span class="font-mono-code-sm text-[10px] text-primary-fixed-dim uppercase tracking-wider mt-0.5">Teacher Portal</span>
                 </div>
+                <button type="button" onclick="toggleSidebar()" class="lg:hidden p-1.5 rounded-lg text-outline hover:text-white">
+                    <span class="material-symbols-outlined text-xl">close</span>
+                </button>
             </div>
             
             <nav class="flex flex-col py-space-sm px-space-xs gap-gutter-dense mt-4">
@@ -96,30 +102,34 @@
     </aside>
 
     <!-- HEADER -->
-    <header class="fixed top-0 left-72 right-0 h-14 bg-surface-container-lowest/90 backdrop-blur-xl z-40 flex items-center justify-between px-space-lg shadow-[0_1px_8px_rgba(0,0,0,0.3)]">
-        <div class="flex items-center gap-space-lg">
-            <div class="flex items-center gap-space-xs bg-surface-container-low px-space-sm py-gutter-dense rounded-DEFAULT">
+    <header class="fixed top-0 left-0 lg:left-72 right-0 h-14 bg-surface-container-lowest/90 backdrop-blur-xl z-30 flex items-center justify-between px-4 sm:px-6 shadow-[0_1px_8px_rgba(0,0,0,0.3)]">
+        <div class="flex items-center gap-3">
+            <button type="button" onclick="toggleSidebar()" class="lg:hidden p-2 rounded-lg bg-surface-container text-on-surface hover:text-white flex items-center justify-center">
+                <span class="material-symbols-outlined text-xl">menu</span>
+            </button>
+            <div class="flex items-center gap-space-xs bg-surface-container-low px-2.5 py-1 rounded-DEFAULT">
                 <span class="w-2 h-2 rounded-full bg-tertiary shadow-[0_0_8px_rgba(216,255,231,0.7)] animate-pulse"></span>
-                <span class="font-mono-code-sm text-mono-code-sm text-on-surface-variant">System Online</span>
+                <span class="font-mono-code-sm text-xs text-on-surface-variant">System Online</span>
             </div>
         </div>
-        <div class="flex items-center gap-space-md">
-            <a href="/teacher/edge" class="flex items-center gap-gutter-dense bg-primary-container/10 text-primary-fixed hover:bg-primary-container hover:text-on-primary-container font-headline-sm text-mono-code-sm px-space-sm py-space-xs rounded-DEFAULT shadow-[0_0_8px_rgba(0,240,255,0.2)] transition-all" style="text-decoration:none;">
+        <div class="flex items-center gap-3">
+            <a href="/teacher/edge" class="flex items-center gap-1 bg-primary-container/10 text-primary-fixed hover:bg-primary-container hover:text-on-primary-container font-headline-sm text-xs px-3 py-1.5 rounded shadow-[0_0_8px_rgba(0,240,255,0.2)] transition-all" style="text-decoration:none;">
                 <span class="material-symbols-outlined text-sm">precision_manufacturing</span>
-                <span>START SCANNER</span>
+                <span>SCANNER</span>
             </a>
-            <div class="h-6 w-[1px] bg-surface-container-highest"></div>
+            <div class="h-6 w-[1px] bg-surface-container-highest hidden sm:block"></div>
             <div class="flex items-center gap-space-sm">
                 <div class="flex flex-col text-right">
-                    <span class="font-mono-metric-md text-mono-metric-md text-on-surface leading-tight">Teacher: {{ t_user|title }}</span>
+                    <span class="font-headline-sm text-xs text-on-surface font-bold leading-tight">{{ t_user|title }}</span>
+                    <span class="font-mono-code-sm text-[10px] text-outline">Faculty</span>
                 </div>
             </div>
         </div>
     </header>
 
     <!-- MAIN CONTENT -->
-    <main class="relative pt-14 pl-72 w-full bg-background min-h-screen">
-        <div class="p-space-lg space-y-space-lg w-full max-w-[800px] mx-auto">
+    <main class="relative pt-16 pl-0 lg:pl-72 w-full bg-background min-h-screen">
+        <div class="p-4 sm:p-6 space-y-6 w-full max-w-[840px] mx-auto">
             
             <div class="bg-surface-container-low rounded-xl p-space-md shadow-xl border border-surface-container-highest">
                 <div class="flex items-center gap-space-xs mb-space-md border-b border-surface-container-highest pb-space-sm">
@@ -206,5 +216,21 @@
             </div>
         </div>
     </main>
+
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebarNav');
+            const overlay = document.getElementById('sidebarOverlay');
+            if(!sidebar) return;
+            const isClosed = sidebar.classList.contains('-translate-x-full');
+            if(isClosed) {
+                sidebar.classList.remove('-translate-x-full');
+                if(overlay) overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                if(overlay) overlay.classList.add('hidden');
+            }
+        }
+    </script>
 </body>
 </html>

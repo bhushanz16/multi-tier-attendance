@@ -188,6 +188,36 @@ async def teacher_logout():
     res.set_cookie(key="teacher_session", value="", max_age=0, expires=0, path="/")
     return res
 
+def get_academic_structure(db: Session):
+    """
+    Returns standard institutional academic structure (Semesters 1 through 6,
+    standard engineering departments, and divisions A-D) independent of student enrollment,
+    merged with any custom entries found in the database.
+    Ensures teachers can always create subjects and manage classes without bottlenecks.
+    """
+    base_sems = ["Semester 1", "Semester 2", "Semester 3", "Semester 4", "Semester 5", "Semester 6"]
+    db_sems = [s[0] for s in db.query(Student.semester).distinct().all() if s[0]]
+    all_sems = list(base_sems)
+    for s in db_sems:
+        if s and s not in all_sems:
+            all_sems.append(s)
+
+    base_depts = ["Computer", "Information Technology", "AI & Data Science", "Mechanical", "Civil", "Electrical"]
+    db_depts = [d[0] for d in db.query(Student.dept).distinct().all() if d[0]]
+    all_depts = list(base_depts)
+    for d in db_depts:
+        if d and d not in all_depts:
+            all_depts.append(d)
+
+    base_divs = ["A", "B", "C", "D"]
+    db_divs = [v[0] for v in db.query(Student.div).distinct().all() if v[0]]
+    all_divs = list(base_divs)
+    for v in db_divs:
+        if v and v not in all_divs:
+            all_divs.append(v)
+
+    return all_sems, all_depts, all_divs
+
 @app.get("/teacher/dashboard", response_class=HTMLResponse)
 async def teacher_dashboard(request: Request, semester: str = None, dept: str = None, div: str = None, db: Session = Depends(get_db)):
     t_user = get_teacher_user(request)
@@ -217,16 +247,12 @@ async def teacher_dashboard(request: Request, semester: str = None, dept: str = 
     subject_stats = db.query(Attendance.subject, func.count(Attendance.id)).filter(
         Attendance.teacher_username == t_user
     ).group_by(Attendance.subject).all()
+
     subjects = [s[0] for s in subject_stats if s[0]]
     counts = [s[1] for s in subject_stats if s[0]]
 
-    # Unique lists for dropdowns (shows all available students' hierarchy with sensible defaults)
-    semesters = [y[0] for y in db.query(Student.semester).distinct().all() if y[0]]
-    if not semesters: semesters = ["Semester 1", "Semester 2", "Semester 3", "Semester 4", "Semester 5", "Semester 6"]
-    depts = [d[0] for d in db.query(Student.dept).distinct().all() if d[0]]
-    if not depts: depts = ["Computer", "AI/DS", "IT", "Mechanical"]
-    divs = [d[0] for d in db.query(Student.div).distinct().all() if d[0]]
-    if not divs: divs = ["A", "B", "C"]
+    # Standard academic hierarchy (guaranteed 6 semesters, standard depts and divs)
+    semesters, depts, divs = get_academic_structure(db)
 
     teacher_subjects = db.query(Subject).filter(Subject.teacher_username == t_user).all()
 
@@ -257,12 +283,7 @@ async def teacher_edge_page(request: Request, db: Session = Depends(get_db)):
     if not t_user:
         return RedirectResponse(url="/teacher/login")
     
-    semesters = [y[0] for y in db.query(Student.semester).distinct().all() if y[0]]
-    if not semesters: semesters = ["Semester 1", "Semester 2", "Semester 3", "Semester 4", "Semester 5", "Semester 6"]
-    depts = [d[0] for d in db.query(Student.dept).distinct().all() if d[0]]
-    if not depts: depts = ["Computer", "AI/DS", "IT", "Mechanical"]
-    divs = [d[0] for d in db.query(Student.div).distinct().all() if d[0]]
-    if not divs: divs = ["A", "B", "C"]
+    semesters, depts, divs = get_academic_structure(db)
 
     teacher_subjects = db.query(Subject).filter(Subject.teacher_username == t_user).all()
     if not teacher_subjects:
@@ -474,11 +495,52 @@ async def teacher_enroll_face_api(data: TeacherEnrollData, request: Request, db:
 
 @app.get("/api/students/{semester}/{dept}/{div}")
 async def get_students_by_hierarchy(semester: str, dept: str, div: str, db: Session = Depends(get_db)):
-    students = db.query(Student).filter(
-        Student.semester == semester, Student.dept == dept, Student.div == div
-    ).order_by(Student.roll_no).all()
+    all_students = db.query(Student).all()
+
+    def norm_sem(s):
+        if not s: return ""
+        return "".join(c for c in str(s).lower() if c.isalnum()).replace("semester", "").replace("sem", "").strip()
+
+    def norm_dept(d):
+        if not d: return ""
+        d_str = str(d).lower()
+        if "comp" in d_str or "cs" in d_str: return "computer"
+        if "info" in d_str or "it" in d_str: return "it"
+        if "ai" in d_str or "ds" in d_str: return "aids"
+        if "mech" in d_str: return "mechanical"
+        if "civil" in d_str: return "civil"
+        if "elect" in d_str: return "electrical"
+        return "".join(c for c in d_str if c.isalnum())
+
+    def norm_div(v):
+        if not v: return ""
+        return str(v).strip().upper()
+
+    target_sem = norm_sem(semester)
+    target_dept = norm_dept(dept)
+    target_div = norm_div(div)
+
+    matched = []
+    for s in all_students:
+        s_sem = norm_sem(s.semester)
+        s_dept = norm_dept(s.dept)
+        s_div = norm_div(s.div)
+
+        sem_ok = (not target_sem) or (s_sem == target_sem) or (semester.lower() in str(s.semester).lower()) or (str(s.semester).lower() in semester.lower())
+        dept_ok = (dept == "All") or (not target_dept) or (s_dept == target_dept) or (dept.lower() in str(s.dept).lower()) or (str(s.dept).lower() in dept.lower())
+        div_ok = (div == "All") or (not target_div) or (s_div == target_div)
+
+        if sem_ok and dept_ok and div_ok:
+            matched.append(s)
+
+    def roll_sort_key(st):
+        digits = "".join(c for c in (st.roll_no or "") if c.isdigit())
+        return int(digits) if digits else 999999
+
+    matched.sort(key=roll_sort_key)
+
     res = []
-    for s in students:
+    for s in matched:
         res.append({
             "roll_no": s.roll_no,
             "student_id": s.student_id or s.roll_no,
@@ -704,12 +766,7 @@ async def teacher_subjects_page(request: Request, db: Session = Depends(get_db))
     t_user = get_teacher_user(request)
     if not t_user: return RedirectResponse(url="/teacher/login")
     subjects = db.query(Subject).filter(Subject.teacher_username == t_user).all()
-    semesters = [y[0] for y in db.query(Student.semester).distinct().all() if y[0]]
-    if not semesters: semesters = ["Semester 1", "Semester 2", "Semester 3", "Semester 4", "Semester 5", "Semester 6"]
-    depts = [d[0] for d in db.query(Student.dept).distinct().all() if d[0]]
-    if not depts: depts = ["Computer", "AI/DS", "IT", "Mechanical", "Civil", "Electrical"]
-    divs = [d[0] for d in db.query(Student.div).distinct().all() if d[0]]
-    if not divs: divs = ["A", "B", "C", "D"]
+    semesters, depts, divs = get_academic_structure(db)
     return templates.TemplateResponse(request=request, name="teacher_subjects.html", context={
         "t_user": t_user, 
         "subjects": subjects, 

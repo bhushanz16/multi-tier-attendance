@@ -21,8 +21,9 @@
         .hud-br { bottom: 10px; right: 10px; border-left: none; border-top: none; }
         
         /* Barcode reader container styling */
-        #barcodeReader { width: 100%; background: #000; border-radius: 8px; overflow: hidden; }
-        #barcodeReader video { transform: none !important; }
+        #barcodeReader { width: 100% !important; min-height: 380px; background: #000; border-radius: 12px; overflow: hidden; position: relative; }
+        #barcodeReader video { width: 100% !important; height: auto !important; max-height: 480px; object-fit: cover !important; border-radius: 12px; transform: none !important; }
+        #barcodeReader__scan_region { border-radius: 8px !important; }
         
         .tab-btn.active {
             background: rgba(0, 240, 255, 0.15);
@@ -46,22 +47,25 @@
 <body class="bg-background font-body-md text-on-surface antialiased min-h-screen flex flex-col">
 
     <!-- HEADER -->
-    <header class="h-16 bg-surface-container-lowest border-b border-surface-container-highest flex items-center justify-between px-6 shadow-lg z-30">
-        <div class="flex items-center gap-3">
-            <span class="material-symbols-outlined text-primary-fixed text-3xl">verified_user</span>
+    <header class="h-16 bg-surface-container-lowest border-b border-surface-container-highest flex items-center justify-between px-3 sm:px-6 shadow-lg z-30">
+        <div class="flex items-center gap-2.5">
+            <span class="material-symbols-outlined text-primary-fixed text-2xl sm:text-3xl">verified_user</span>
             <div class="flex flex-col">
-                <span class="font-headline-sm text-lg text-primary tracking-tight font-bold">MULTI-TIER ATTENDANCE TERMINAL</span>
-                <span class="font-mono-code-sm text-xs text-outline tracking-wider">AI Face Scan • ID Barcode / QR • Manual Roster</span>
+                <span class="font-headline-sm text-sm sm:text-lg text-primary tracking-tight font-bold leading-tight">
+                    <span class="hidden sm:inline">MULTI-TIER ATTENDANCE TERMINAL</span>
+                    <span class="sm:hidden">ATTENDANCE HUB</span>
+                </span>
+                <span class="font-mono-code-sm text-[10px] sm:text-xs text-outline tracking-wider">Face • 8-Digit Barcode / QR • Manual</span>
             </div>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2">
             <div id="statsBadge" class="hidden sm:flex items-center gap-2 bg-surface-container-high border border-surface-container-highest px-3 py-1 rounded-lg text-xs font-mono-code-sm">
                 <span class="text-outline">PRESENT:</span>
                 <span id="badgePresentCount" class="text-tertiary-fixed font-bold">0</span>
                 <span class="text-outline">/</span>
                 <span id="badgeTotalCount" class="text-on-surface">0</span>
             </div>
-            <a href="/teacher/dashboard" class="flex items-center gap-1.5 bg-surface-container hover:bg-surface-container-high text-on-surface font-headline-sm text-xs px-3 py-2 rounded-lg border border-surface-container-highest transition-colors">
+            <a href="/teacher/dashboard" class="flex items-center gap-1 bg-surface-container hover:bg-surface-container-high text-on-surface font-headline-sm text-xs px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg border border-surface-container-highest transition-colors">
                 <span class="material-symbols-outlined text-sm">arrow_back</span>
                 <span>DASHBOARD</span>
             </a>
@@ -207,12 +211,18 @@
                         <div class="flex items-center justify-between border-b border-surface-container-highest pb-3">
                             <div>
                                 <h3 class="font-headline-sm text-base text-secondary-fixed font-bold">Student ID Barcode / QR Camera Scanner</h3>
-                                <p class="text-xs font-mono-code-sm text-outline mt-0.5">Point the camera at student physical ID barcode or mobile screen QR code</p>
+                                <p class="text-xs font-mono-code-sm text-outline mt-0.5">Spacious viewfinder: captures 8-digit physical ID barcodes & mobile QR codes</p>
                             </div>
-                            <span class="material-symbols-outlined text-secondary-fixed text-2xl">qr_code_scanner</span>
+                            <div class="flex items-center gap-2">
+                                <button type="button" id="switchBarcodeCameraBtn" class="bg-surface-container-highest hover:bg-surface-container text-secondary-fixed text-xs px-3 py-1.5 rounded-lg border border-surface-variant flex items-center gap-1.5 transition-colors">
+                                    <span class="material-symbols-outlined text-sm">flip_camera_ios</span>
+                                    <span>Flip Camera</span>
+                                </button>
+                                <span class="material-symbols-outlined text-secondary-fixed text-2xl hidden sm:inline">qr_code_scanner</span>
+                            </div>
                         </div>
 
-                        <div id="barcodeReader" class="overflow-hidden border border-secondary-container/40"></div>
+                        <div id="barcodeReader" class="overflow-hidden border border-secondary-container/40 rounded-xl min-h-[360px] bg-black"></div>
 
                         <!-- Manual USB Handheld Scanner / Keyboard Wedge Input -->
                         <div class="pt-3 border-t border-surface-container-highest flex flex-col gap-2">
@@ -519,10 +529,32 @@
                 return;
             }
 
+            function normSem(s) {
+                if(!s) return '';
+                return s.toString().toLowerCase().replace('semester', '').replace('sem', '').replace(/[\s\-_]/g, '').trim();
+            }
+            function normDept(d) {
+                if(!d) return '';
+                const str = d.toString().toLowerCase();
+                if(str.includes('comp') || str.includes('cs')) return 'computer';
+                if(str.includes('info') || str.includes('it')) return 'it';
+                if(str.includes('ai') || str.includes('ds')) return 'aids';
+                if(str.includes('mech')) return 'mechanical';
+                if(str.includes('civil')) return 'civil';
+                if(str.includes('elect')) return 'electrical';
+                return str.replace(/[\s\-_]/g, '');
+            }
+
             const filtered = allSubjects.filter(s => {
-                const semMatch = (!s.semester || s.semester === 'All' || s.semester === sem);
-                const deptMatch = (!dept || !s.dept || s.dept === 'All' || s.dept.toLowerCase() === dept.toLowerCase());
-                const divMatch = (!div || !s.div || s.div === 'All' || s.div.toUpperCase() === div.toUpperCase());
+                const sSem = normSem(s.semester);
+                const tSem = normSem(sem);
+                const semMatch = (!s.semester || s.semester === 'All' || !tSem || sSem === tSem);
+
+                const sDept = normDept(s.dept);
+                const tDept = normDept(dept);
+                const deptMatch = (!dept || dept === 'All' || !s.dept || s.dept === 'All' || sDept === tDept);
+
+                const divMatch = (!div || div === 'All' || !s.div || s.div === 'All' || s.div.toUpperCase() === div.toUpperCase());
                 return semMatch && deptMatch && divMatch;
             });
 
@@ -839,6 +871,15 @@
         }
 
         // ==================== MODE 2: ID CARD BARCODE & QR SCANNER ====================
+        let barcodeFacingMode = "environment";
+
+        function getDynamicQrBox(viewfinderWidth, viewfinderHeight) {
+            // Expansive rectangular scanning region for physical ID card barcodes (8 digits)
+            const w = Math.floor(Math.min(viewfinderWidth * 0.94, 560));
+            const h = Math.floor(Math.min(viewfinderHeight * 0.75, 340));
+            return { width: Math.max(w, 280), height: Math.max(h, 200) };
+        }
+
         async function startBarcodeMode() {
             statusText.innerText = "Barcode & QR Scanner Active. Align ID card barcode in frame.";
             
@@ -849,13 +890,14 @@
 
                 barcodeActive = true;
                 const config = {
-                    fps: 15,
-                    qrbox: { width: 320, height: 200 },
-                    aspectRatio: 1.6
+                    fps: 20,
+                    qrbox: getDynamicQrBox,
+                    aspectRatio: 1.6,
+                    disableFlip: false
                 };
 
                 await html5QrScanner.start(
-                    { facingMode: "environment" },
+                    { facingMode: barcodeFacingMode },
                     config,
                     (decodedText, decodedResult) => {
                         handleBarcodeDetected(decodedText.trim());
@@ -864,22 +906,36 @@
                         // ignore scan search misses
                     }
                 );
-                addLog("Camera barcode/QR reader initialized.", "INFO");
+                addLog(`Camera barcode/QR reader armed (${barcodeFacingMode} camera).`, "INFO");
 
             } catch(e) {
-                // If back camera failed, try user camera
+                // If requested camera failed, fallback to alternate
                 try {
+                    const altMode = (barcodeFacingMode === "environment") ? "user" : "environment";
                     await html5QrScanner.start(
-                        { facingMode: "user" },
-                        { fps: 15, qrbox: { width: 300, height: 200 } },
+                        { facingMode: altMode },
+                        { fps: 20, qrbox: getDynamicQrBox, aspectRatio: 1.6 },
                         (decodedText) => handleBarcodeDetected(decodedText.trim()),
                         () => {}
                     );
+                    barcodeFacingMode = altMode;
                 } catch(err2) {
                     statusText.innerText = "Barcode camera initialization failed: " + err2.message;
                     addLog("Barcode scanner camera error: " + err2.message, "ERR");
                 }
             }
+        }
+
+        // Camera Flip Button on Barcode Scanner
+        const switchBarcodeCameraBtn = document.getElementById('switchBarcodeCameraBtn');
+        if(switchBarcodeCameraBtn) {
+            switchBarcodeCameraBtn.addEventListener('click', async () => {
+                barcodeFacingMode = (barcodeFacingMode === "environment") ? "user" : "environment";
+                if(barcodeActive) {
+                    await stopBarcodeMode();
+                    await startBarcodeMode();
+                }
+            });
         }
 
         async function stopBarcodeMode() {
@@ -891,24 +947,57 @@
             }
         }
 
-        // Helper: Find student by Student ID (PRN), Roll No, or Name
+        // Helper: Find student by Student ID (8-digit PRN/Barcode UID), Roll No, or Name
         function findStudentByCode(rawCode) {
             if(!rawCode) return null;
-            const q = rawCode.trim().toLowerCase();
-            // 1. Direct match on student_id (Primary Institutional ID)
-            let match = allStudents.find(s => s.student_id && s.student_id.toLowerCase() === q);
+            let q = rawCode.trim();
+            // Strip common barcode start/stop asterisks, percent, question mark, or whitespace
+            q = q.replace(/^[\*\$%\?#\s]+|[\*\$%\?#\s]+$/g, '');
+            const qLower = q.toLowerCase();
+
+            // 1. Direct exact match on student_id (Primary Institutional ID / Card UID)
+            let match = allStudents.find(s => s.student_id && s.student_id.trim().toLowerCase() === qLower);
             if(match) return match;
-            // 2. Direct match on roll_no
-            match = allStudents.find(s => s.roll_no && s.roll_no.toLowerCase() === q);
+
+            // 2. Direct exact match on roll_no
+            match = allStudents.find(s => s.roll_no && s.roll_no.trim().toLowerCase() === qLower);
             if(match) return match;
-            // 3. Substring match on student_id or roll_no (e.g. barcode containing "PRN101" or "STU202401")
-            match = allStudents.find(s => (s.student_id && q.includes(s.student_id.toLowerCase())) || (s.roll_no && q.includes(s.roll_no.toLowerCase())));
+
+            // 3. Extract 8-digit numeric sequence (Physical card barcode student ID)
+            const eightDigitMatch = q.match(/\b\d{8}\b/);
+            if(eightDigitMatch) {
+                const num8 = eightDigitMatch[0];
+                match = allStudents.find(s => {
+                    const sid = (s.student_id || '').trim();
+                    const roll = (s.roll_no || '').trim();
+                    return sid === num8 || sid.includes(num8) || num8.includes(sid) || roll === num8 || roll.includes(num8);
+                });
+                if(match) return match;
+            }
+
+            // 4. Numeric match ignoring leading zeroes (e.g. 00012345 vs 12345)
+            const qNumericOnly = q.replace(/\D/g, '');
+            if(qNumericOnly) {
+                const qStripped = qNumericOnly.replace(/^0+/, '');
+                match = allStudents.find(s => {
+                    const sidNum = (s.student_id || '').replace(/\D/g, '').replace(/^0+/, '');
+                    const rollNum = (s.roll_no || '').replace(/\D/g, '').replace(/^0+/, '');
+                    return (sidNum && sidNum === qStripped) || (rollNum && rollNum === qStripped);
+                });
+                if(match) return match;
+            }
+
+            // 5. Substring containment match on student_id or roll_no
+            match = allStudents.find(s => {
+                const sid = (s.student_id || '').toLowerCase();
+                const roll = (s.roll_no || '').toLowerCase();
+                return (sid && (qLower.includes(sid) || sid.includes(qLower))) ||
+                       (roll && (qLower.includes(roll) || roll.includes(qLower)));
+            });
             if(match) return match;
-            // 4. Substring in code
-            match = allStudents.find(s => (s.student_id && s.student_id.toLowerCase().includes(q)) || (s.roll_no && s.roll_no.toLowerCase().includes(q)));
-            if(match) return match;
-            // 5. Name match
-            match = allStudents.find(s => s.name && s.name.toLowerCase().includes(q));
+
+            // 6. Name match fallback
+            match = allStudents.find(s => s.name && (s.name.toLowerCase() === qLower || s.name.toLowerCase().includes(qLower)));
             return match;
         }
 
