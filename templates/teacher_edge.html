@@ -405,7 +405,11 @@
     <!-- Audio Beep Generator for Scanner -->
     <script>
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let lastChimeTime = 0;
         function playChime(success = true) {
+            const now = Date.now();
+            if(now - lastChimeTime < 180) return; // Prevent audio distortion when 5-6 students are marked in the same frame
+            lastChimeTime = now;
             try {
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
@@ -810,6 +814,7 @@
 
                 if(faceMatcher && resizedDetections.length > 0) {
                     const results = resizedDetections.map(d => faceMatcher.findBestMatch(d.descriptor));
+                    let frameRecognized = 0;
 
                     results.forEach((result, i) => {
                         const box = resizedDetections[i].detection.box;
@@ -819,12 +824,16 @@
 
                         if (result.label !== 'unknown') {
                             const [roll, name] = result.label.split('::');
-                            text = `${name} (${roll})`;
+                            const matchPercent = Math.max(0, Math.round((1 - Math.min(result.distance, 1)) * 100));
+                            text = `✓ ${name} (${roll}) • ${matchPercent}%`;
                             color = 'rgba(16, 185, 129, 1)';
+                            bgColor = 'rgba(6, 78, 59, 0.9)';
                             markStudent(roll, 'Present', 'Face');
+                            frameRecognized++;
                         } else {
                             color = 'rgba(239, 68, 68, 1)';
-                            text = 'Unrecognized Face';
+                            bgColor = 'rgba(127, 29, 29, 0.9)';
+                            text = 'Unknown Face';
                         }
 
                         // Mirror coordinates if front camera
@@ -842,12 +851,16 @@
                                 anchorPosition: 'TOP_RIGHT',
                                 backgroundColor: bgColor,
                                 fontColor: color,
-                                fontSize: 14,
+                                fontSize: 13,
                                 padding: 4
                             }
                         });
                         drawBox.draw(overlay);
                     });
+
+                    if(resizedDetections.length > 1) {
+                        statusText.innerText = `Multi-Face Active: Detected ${resizedDetections.length} students simultaneously (${frameRecognized} verified)`;
+                    }
                 }
             } catch(err) {
                 // continue loop on frame error
